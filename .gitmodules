@@ -1,0 +1,3 @@
+[submodule "serialcsvnode/externals/etl"]
+	path = serialcsvnode/externals/etl
+	url = https://github.com/HpLightcorner/etl.git
