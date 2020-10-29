@@ -65,26 +65,43 @@ message(STATUS "Qt5Core_RCC_EXECUTABLE = ${Qt5Core_RCC_EXECUTABLE}")
 AddUniqueTargetFromSubdirectory(pugixml "${SW_APP_ROOT}/3rdparty/pugixml-1.9/scripts" "3rdparty/pugixml-1.9")
 AddUniqueTargetFromSubdirectory(odk "${ODK_ROOT}/odk" "odk")
 
+set(SERIAL_PLUGIN_HEADER_FILES
+    include/serialcsvplugin/details/common.h
+    include/serialcsvplugin/CsvDataLineDecoder.h
+    include/serialcsvplugin/CsvChannel.h
+    include/serialcsvplugin/details/SerialPort.h
+    include/serialcsvplugin/CsvAdvancedProtocolLineDecoder.h
+)
+source_group("Header Files" FILES ${SERIAL_PLUGIN_HEADER_FILES})
+
+set(SERIAL_PLUGIN_SOURCE_FILES
+    src/CsvDataLineDecoder.cpp
+    src/SerialPort.cpp
+    src/SerialCsvPlugin.cpp
+    src/CsvAdvancedProtocolLineDecoder.cpp
+    src/CsvDecoder.cpp
+)
+source_group("Source Files" FILES ${SERIAL_PLUGIN_SOURCE_FILES})
+
+set(SERIAL_PLUGIN_QML_FILES
+    qml/AddSerialCsvPort.qml
+)
+source_group("QML Files" FILES ${SERIAL_PLUGIN_QML_FILES})
+
+
 add_library(${PROJECT_NAME} SHARED
-        include/serialcsvplugin/details/common.h
-        include/serialcsvplugin/CsvDataLineDecoder.h
-        include/serialcsvplugin/CsvChannel.h
-        include/serialcsvplugin/details/SerialPort.h
-        include/serialcsvplugin/CsvAdvancedProtocolLineDecoder.h
-        src/CsvDataLineDecoder.cpp
-        src/SerialPort.cpp
-        src/SerialCsvPlugin.cpp
-        src/CsvAdvancedProtocolLineDecoder.cpp
-        src/CsvDecoder.cpp
+    ${SERIAL_PLUGIN_HEADERS}
+    ${SERIAL_PLUGIN_SOURCE_FILES}
+    ${SERIAL_PLUGIN_QML_FILES}
 )
 
 target_link_libraries(${PROJECT_NAME} 
-        PRIVATE odk_framework
+    PRIVATE odk_framework
 )
 
 target_include_directories(${PROJECT_NAME}
-        PUBLIC include
-        SYSTEM ${Boost_INCLUDE_DIRS}
+    PUBLIC include
+    SYSTEM ${Boost_INCLUDE_DIRS}
 )
 
 #

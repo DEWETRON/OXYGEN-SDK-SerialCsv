@@ -9,62 +9,102 @@ import Oxygen.Tools 1.0
 import Oxygen.Widgets 1.0
 
 
-Item
-{
+Item{
     id: root
 
     property var channels: QObjectTreeModel {}
 
-    property string filename
-    property bool csv_valid: false
-    readonly property bool settingsValid: filename !== "" && csv_valid
-    property int num_ports: 0
+    // ListModel holding available ports
+    property var availableComPorts: ListModel{}
+    property var selectedSerialPortindex: -1
 
-    function queryProperties()
-    {
-        var props = {}
 
-        props["SERIAL_CSV_PLUGIN/ComPort"] = root.filename;
 
-        return props;
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            queryComPorts.query()
+        }
     }
 
-    ColumnLayout
-    {
+    ColumnLayout{
         anchors.leftMargin: Theme.smallMargin
         anchors.rightMargin: Theme.smallMargin
         anchors.fill: parent
 
         spacing: Theme.mediumSpacing
 
-        Button {
-            id: RefreshPortsButton
-            text: qsTranslate("ODK_REPLAY_SYNC_SCALAR/AddChannel", "Select CSV file") + Theme.actionEllipsis
+        GridLayout{
+            columns: 3
 
-            onClicked: {
-                queryComPorts.query();
+            Label{
+                text: "Select Serial Port"
             }
-        }
 
-        Label
-        {
-            text: qsTranslate("SERIAL_CSV_PLUGIN/AddSerialCsvPort", "Selected CSV file") + ":"
-        }
+            ComboBox{
+                id: selectedSerialPort
+                model: root.availableComPorts
+                textRole: "text"
+                currentIndex: 0
+                onCurrentIndexChanged: {
+                    //console.log(currentIndex)
+                    //console.log(root.availableComPorts.get(currentIndex).text)
+                    //console.log(root.availableComPorts.get(currentIndex).desc)
+                    var desc = root.availableComPorts.get(currentIndex) ? root.availableComPorts.get(currentIndex).desc : ""
+                    if (desc) {
+                        selectedSerialPortDesc.text = desc
+                        root.selectedSerialPortindex = currentIndex
+                    }
+                   
+                }
 
-        TextField
-        {
-            id: idInputField
-            Layout.fillWidth: true
-            text: root.filename
-            readOnly: true
-            placeholderText: qsTranslate("SERIAL_CSV_PLUGIN/AddSerialCsvPort", "No file selected")
-        }
+            }
 
-        Label
-        {
-            text: qsTranslate("SERIAL_CSV_PLUGIN/AddSerialCsvPort", "Not a valid CSV file")
-            visible: !root.csv_valid
-            color: Theme.error
+            Label{
+                id: selectedSerialPortDesc
+                text: ""
+            }
+
+
+
+            Label{
+                text: "Baudrate"
+            }
+
+            ComboBox{
+                model: ListModel{
+                    ListElement { text: "115200" }
+                    ListElement { text: "57600" }
+                    ListElement { text: "38400" }
+                    ListElement { text: "19200" }
+                    ListElement { text: "9600" }
+                }
+            }
+            
+            Label{
+                text: ""
+            }
+
+            Label{
+                text: "Number of channels"
+            }
+
+            TextField{
+                id: idNumChannels
+                //Layout.fillWidth: true
+                text: "6"
+                readOnly: false
+            }
+
+            Label{
+                text: ""
+            }
+
+
+            VerticalSpacer {}
         }
 
         VerticalSpacer {}
@@ -75,16 +115,29 @@ Item
         id: queryComPorts
         messageId: 1
 
-        function query()
-        {
-        console.log("Query available COM-Ports...");
+        function query() {
+            //console.log("Query available COM-Ports...");
             var props = plugin.createPropertyList();
             request(props);
         }
-        onResponse:
-        {
-            console.log("Received response: " + value.getString("5"));
+        onResponse: {
+            root.availableComPorts.clear()
 
+            for (var i=0; i<value.size; i=i+2) {
+                // console.log("-> " + value.getString(i))
+                // console.log("-> " + value.getString(i+1))
+                root.availableComPorts.append({ text: value.getString(i), desc: value.getString(i + 1) })
+            }
+
+            selectedSerialPort.model = root.availableComPorts
+            // TODO This is a workaround so that the first serialport is displayed
+            selectedSerialPort.currentIndex = 10
+            if (root.selectedSerialPortindex == -1) { 
+                root.selectedSerialPortindex = 0
+            }
+
+            selectedSerialPort.currentIndex = root.selectedSerialPortindex
+            //console.log("currIndex = " + selectedSerialPort.currentIndex)
         }
     }
 }
