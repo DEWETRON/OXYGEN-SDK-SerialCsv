@@ -12,13 +12,23 @@ import Oxygen.Widgets 1.0
 Item{
     id: root
 
-    property var channels: QObjectTreeModel {}
-
     // ListModel holding available ports
     property var availableComPorts: ListModel{}
     property var selectedSerialPortindex: -1
 
+    property string selectedSerialPort: null
+    property string selectedBaudRate: "115200"
+    property string numChannels: "1"
 
+    function queryProperties(){
+        var props = {}
+
+        props["SERIAL_CSV_PLUGIN/SerialPort"] = root.selectedSerialPort
+        props["SERIAL_CSV_PLUGIN/BaudRate"] = root.selectedBaudRate
+        props["SERIAL_CSV_PLUGIN/NumChannels"] = root.numChannels
+
+        return props;
+    }
 
     Timer {
         interval: 5000
@@ -50,17 +60,19 @@ Item{
                 textRole: "text"
                 currentIndex: 0
                 onCurrentIndexChanged: {
-                    //console.log(currentIndex)
-                    //console.log(root.availableComPorts.get(currentIndex).text)
-                    //console.log(root.availableComPorts.get(currentIndex).desc)
                     var desc = root.availableComPorts.get(currentIndex) ? root.availableComPorts.get(currentIndex).desc : ""
                     if (desc) {
                         selectedSerialPortDesc.text = desc
                         root.selectedSerialPortindex = currentIndex
+                        
+                        var serial_port = root.availableComPorts.get(currentIndex).text
+                        
+                        if (serial_port != root.selectedSerialPort) {
+                            root.selectedSerialPort = serial_port
+                            selectComPort.selectComPort(serial_port, root.selectedBaudRate)
+                        }
                     }
-                   
                 }
-
             }
 
             Label{
@@ -82,6 +94,13 @@ Item{
                     ListElement { text: "19200" }
                     ListElement { text: "9600" }
                 }
+                onCurrentIndexChanged: {
+                    //console.log(currentText + " != " + root.selectedBaudRate)
+                    if (currentText != root.selectedBaudRate) {
+                        root.selectedBaudRate = currentText
+                        selectComPort.selectComPort(root.selectedSerialPort, root.selectedBaudRate)
+                    }
+                }
             }
             
             Label{
@@ -94,9 +113,17 @@ Item{
 
             TextField{
                 id: idNumChannels
-                //Layout.fillWidth: true
-                text: "6"
+                text: root.numChannels
                 readOnly: false
+                validator: IntValidator{ bottom: 0; top: 10;}
+                onAccepted: {
+                    root.numChannels = str(text)
+                }
+                onActiveFocusChanged: {
+                    if (!activeFocus) {
+                        root.numChannels = text
+                    }
+                }
             }
 
             Label{
@@ -116,7 +143,6 @@ Item{
         messageId: 1
 
         function query() {
-            //console.log("Query available COM-Ports...");
             var props = plugin.createPropertyList();
             request(props);
         }
@@ -124,8 +150,6 @@ Item{
             root.availableComPorts.clear()
 
             for (var i=0; i<value.size; i=i+2) {
-                // console.log("-> " + value.getString(i))
-                // console.log("-> " + value.getString(i+1))
                 root.availableComPorts.append({ text: value.getString(i), desc: value.getString(i + 1) })
             }
 
@@ -137,7 +161,21 @@ Item{
             }
 
             selectedSerialPort.currentIndex = root.selectedSerialPortindex
-            //console.log("currIndex = " + selectedSerialPort.currentIndex)
+        }
+    }
+
+    CustomPluginRequest {
+        id: selectComPort
+        messageId: 2
+
+        function selectComPort(serial_port, baudrate) {
+            var props = plugin.createPropertyList();
+            props.setString("serialport", serial_port);
+            props.setString("baudrate", baudrate);
+            request(props);
+        }
+        onResponse: {
+            //console.log("Received response: " + value.getSigned("status"));
         }
     }
 }

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <queue>
 #include <mutex>
+#include <vector>
 
 #include "details/Common.h"
 
@@ -11,7 +11,7 @@ namespace serialcsv
     class CsvChannel
     {
     public:
-        using Dataset = std::queue<CsvSample>;
+        using Dataset = std::vector<CsvSample>;
 
         CsvChannel() = default;
         CsvChannel(const ChannelDescription &metadata) : m_metadata(std::move(metadata))
@@ -20,13 +20,13 @@ namespace serialcsv
 
         void addSample(const CsvSample &sample)
         {
-            std::unique_lock<std::mutex> lock;
-            m_dataset.push(sample);
+            std::unique_lock<std::mutex> lock(m_mutex);
+            m_dataset.push_back(sample);
         }
 
         Dataset getAndResetDataset()
         {
-            std::unique_lock<std::mutex> lock;
+            std::unique_lock<std::mutex> lock(m_mutex);
 
             Dataset ret{};
             ret.swap(m_dataset);

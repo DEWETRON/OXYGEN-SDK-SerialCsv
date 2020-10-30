@@ -69,6 +69,7 @@ set(SERIAL_PLUGIN_HEADER_FILES
     include/serialcsvplugin/details/common.h
     include/serialcsvplugin/CsvDataLineDecoder.h
     include/serialcsvplugin/CsvChannel.h
+    include/serialcsvplugin/CsvDecoder.h
     include/serialcsvplugin/details/SerialPort.h
     include/serialcsvplugin/CsvAdvancedProtocolLineDecoder.h
 )
@@ -90,7 +91,7 @@ source_group("QML Files" FILES ${SERIAL_PLUGIN_QML_FILES})
 
 
 add_library(${PROJECT_NAME} SHARED
-    ${SERIAL_PLUGIN_HEADERS}
+    ${SERIAL_PLUGIN_HEADER_FILES}
     ${SERIAL_PLUGIN_SOURCE_FILES}
     ${SERIAL_PLUGIN_QML_FILES}
 )

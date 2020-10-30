@@ -5,12 +5,36 @@
 serialcsv::CsvDecoder::CsvDecoder()
 {
 }
+
+bool serialcsv::CsvDecoder::hasTimeSource() const
+{
+    return !!m_currentTick;
+}
+
+void serialcsv::CsvDecoder::setTimeSource(std::function<int64_t(void)> currentTick)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_currentTick = currentTick;
+}
+
 void serialcsv::CsvDecoder::listenOnComPort(const SerialConfig &port_config)
 {
     using namespace std::placeholders;
     auto cb = std::bind(&serialcsv::CsvDecoder::onLineReceived, this, _1);
     m_serial.start(port_config, cb);
 }
+
+void serialcsv::CsvDecoder::stopListening()
+{
+    m_serial.stop();
+}
+
+void serialcsv::CsvDecoder::clear()
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_channels.clear();
+}
+
 
 bool serialcsv::CsvDecoder::requestHeader(const int repeat_for)
 {
@@ -34,7 +58,18 @@ bool serialcsv::CsvDecoder::requestHeader(const int repeat_for)
 
 void serialcsv::CsvDecoder::onLineReceived(const std::string &line)
 {
-    auto timestamp = clock::now(); // TODO: Create an Oxygen-Compatible Timestamp!
+    std::unique_lock<std::mutex> lock(m_mutex);
+    int64_t timestamp = 0;
+
+    if (m_currentTick)
+    {
+        timestamp = m_currentTick();
+    }
+    else
+    {
+        auto timestamp_t = clock::now(); // TODO: Create an Oxygen-Compatible Timestamp!
+        timestamp = clock::to_time_t(timestamp_t);
+    }
 
     // First, try to decode as a dataline
     serialcsv::CsvDataLineDecoder data(line);

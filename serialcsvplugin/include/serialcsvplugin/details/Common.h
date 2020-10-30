@@ -10,13 +10,13 @@ namespace serialcsv
 
     struct CsvSample
     {
-        CsvSample(double v, time_point t)
+        CsvSample(double v, int64_t t)
         {
             value = v;
             time = t;
         }
         
-        time_point time;
+        int64_t time;
         double value;
     };
 

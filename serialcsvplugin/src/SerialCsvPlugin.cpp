@@ -6,8 +6,10 @@
 #include "odkfw_properties.h"
 #include "odkfw_custom_request_handler.h"
 #include "odkfw_software_channel_plugin.h"
+#include "serialcsvplugin/CsvDecoder.h"
 #include "serial/serial.h"
 #include "qml.rcc.h"
+#include <boost/lexical_cast.hpp>
 
 // Manifest constains necessary metadata for oxygen plugins
 //   OxygenPlugin.name: unique plugin identifier; please use your (company) name to avoid name conflicts. This name is also used as a prefix in all custom config item keys.
@@ -37,6 +39,7 @@ R"XML(<?xml version="1.0"?>
     <!-- Translations for Config-Keys -->
     <context><name>ConfigKeys</name>
         <message><source>SERIAL_CSV_PLUGIN/ComPort</source><translation>COM Port</translation></message>
+        <message><source>SERIAL_CSV_PLUGIN/BaudRate</source><translation>Baud rate</translation></message>
     </context>
 
 
@@ -50,6 +53,7 @@ R"XML(<?xml version="1.0"?>
 
 
 static const char* SERIAL_COM_PORT = "SERIAL_CSV_PLUGIN/ComPort";
+static const char* SERIAL_BAUDRATE = "SERIAL_CSV_PLUGIN/BaudRate";
 
 // Keys for ConfigItems that are used to store channel settings
 // Custom key (prefixed by plugin name) to store path to the input file
@@ -61,16 +65,15 @@ class SerialCsvChannel : public SoftwareChannelInstance
 {
 public:
     SerialCsvChannel()
-    : m_com_port(new EditableStringProperty("COM-Port"))
+        : m_com_port_prop(new EditableStringProperty("COM-Port"))
+        , m_baudrate_prop(new EditableStringProperty("Baudrate"))
+        , m_num_channels()
+        , m_csv_decoder()
     {
-        // Testing list-property
-        //m_com_port->addOption("COM1");
-        //m_com_port->addOption("COM2");
-        auto ser_port_list = serial::list_ports();
-        for (const auto& sp : ser_port_list)
-        {
-            m_com_port->addOption(sp.port);
-        }
+    }
+
+    ~SerialCsvChannel()
+    {
     }
 
     // Describe how the software channel should be shown in the "Add Channel" dialog
@@ -90,6 +93,46 @@ public:
     bool setup(const std::vector<odk::Property>& properties) override
     {
         odk::PropertyList props(properties);
+
+        auto serialport = props.getString("SERIAL_CSV_PLUGIN/SerialPort");
+        auto baudrate = props.getString("SERIAL_CSV_PLUGIN/BaudRate");
+        auto numchannels = props.getString("SERIAL_CSV_PLUGIN/NumChannels");
+        try
+        {
+            m_num_channels = boost::lexical_cast<uint32_t>(numchannels);
+            m_baudrate_prop->setValue(baudrate);
+
+        }
+        catch(const boost::bad_lexical_cast&)
+        { }
+
+        if (!serialport.empty() && !baudrate.empty())
+        {
+            m_com_port_prop->setValue(serialport);
+            createChannels();
+        }
+
+        return true;
+    }
+
+    bool createChannels()
+    {
+        for (uint32_t channel_no = 0; channel_no < m_num_channels; ++channel_no)
+        {
+            std::string name = std::string("S ") + std::to_string(channel_no + 1);
+            auto channel = addOutputChannel(name);
+            if (channel)
+            {
+                channel->setDefaultName(name)
+                    .setSampleFormat(
+                        odk::ChannelDataformat::SampleOccurrence::ASYNC,
+                        odk::ChannelDataformat::SampleFormat::DOUBLE,
+                        1)
+                    .setRange({ -10, 10, "V", "V"})
+                    ;
+            }
+        }
+
         return true;
     }
 
@@ -112,13 +155,10 @@ public:
     {
         ODK_UNUSED(host);
 
-        getRootChannel()->setDefaultName("Serial-CSV")
-            .setSampleFormat(
-                odk::ChannelDataformat::SampleOccurrence::ASYNC,
-                odk::ChannelDataformat::SampleFormat::DOUBLE,
-                1)
+        getRootChannel()->setDefaultName(std::string("Serial-CSV ") + m_com_port_prop->getValue())
             .setDeletable(true)
-            .addProperty(SERIAL_COM_PORT, m_com_port);
+            .addProperty(SERIAL_COM_PORT, m_com_port_prop)
+            .addProperty(SERIAL_BAUDRATE, m_baudrate_prop);
     }
 
     bool configure(
@@ -132,16 +172,62 @@ public:
     void prepareProcessing(odk::IfHost *host) override
     {
         ODK_UNUSED(host);
+        uint32_t baudrate = 9600;
+        try
+        {
+            baudrate = boost::lexical_cast<uint32_t>(m_baudrate_prop->getValue());
+        }
+        catch(const boost::bad_lexical_cast&) {}
+
+        m_csv_decoder.setTimeSource([host](void) { return getMasterTimestamp(host).m_ticks; });
+        m_csv_decoder.listenOnComPort({ m_com_port_prop->getValue(), baudrate });
+    }
+
+    void stopProcessing(odk::IfHost* host) override
+    { 
+        ODK_UNUSED(host);
+        m_csv_decoder.stopListening();
+        m_csv_decoder.clear();
+        m_csv_decoder.setTimeSource({});
     }
 
     void process(ProcessingContext &context, odk::IfHost *host) override
     {
         ODK_UNUSED(context);
         ODK_UNUSED(host);
+
+        // CSV source channels
+        auto& csv_channels = m_csv_decoder.getChannels();
+
+        // Oxygen channels
+        const auto& channels = getOutputChannels();
+        auto ts = getMasterTimestamp(host);
+
+        int chidx = 0;
+        for (auto ch : channels)
+        {
+            // skip parent group channel
+            if (!ch->getLocalParent()) continue;
+
+            // check out of range access
+            if (chidx >= csv_channels.size()) return;
+
+            auto& csv_chan = csv_channels.at(chidx);
+               
+            auto data_set = csv_chan->getAndResetDataset();
+
+            for (const auto& sample : data_set)
+            {
+                addSample(host, ch->getLocalId(), sample.time, sample.value);
+            }
+        }
     }
 
 private:
-std::shared_ptr<EditableStringProperty> m_com_port;
+    std::shared_ptr<EditableStringProperty> m_com_port_prop;
+    std::shared_ptr<EditableStringProperty> m_baudrate_prop;
+    uint32_t m_num_channels;
+    serialcsv::CsvDecoder m_csv_decoder;
 };
 
 class SerialCsvChannelPlugin : public SoftwareChannelPlugin<SerialCsvChannel>
@@ -154,6 +240,7 @@ public:
 
         namespace arg = std::placeholders;
         m_custom_requests->registerFunction(1, "queryComPorts", std::bind(&SerialCsvChannelPlugin::queryComPorts, this, arg::_1, arg::_2));
+        m_custom_requests->registerFunction(2, "selectComPort", std::bind(&SerialCsvChannelPlugin::selectComPort, this, arg::_1, arg::_2));
     }
 
     void registerResources() final
@@ -179,6 +266,24 @@ public:
             returns.setString("", sp.port);
             returns.setString("", sp.description);
         }
+
+        return odk::error_codes::OK;
+    }
+
+    std::uint64_t selectComPort(const odk::PropertyList& params, odk::PropertyList& returns)
+    {
+        ODK_UNUSED(params);
+
+        const auto serialport = params.getString("serialport");
+        const auto baudrate = params.getString("baudrate");
+
+        if (!serialport.empty())
+        {
+            // TODO scanning for incoming traffic
+
+        }
+
+        returns.setSigned("status", 0);
 
         return odk::error_codes::OK;
     }
