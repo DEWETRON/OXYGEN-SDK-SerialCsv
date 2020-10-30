@@ -220,6 +220,7 @@ public:
             {
                 addSample(host, ch->getLocalId(), sample.time, sample.value);
             }
+            ++chidx;
         }
     }
 
