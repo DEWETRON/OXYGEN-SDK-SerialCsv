@@ -155,7 +155,7 @@ public:
     {
         ODK_UNUSED(host);
 
-        getRootChannel()->setDefaultName(std::string("Serial-CSV ") + m_com_port_prop->getValue())
+        getRootChannel()->setDefaultName(std::string("Serial-CSV"))
             .setDeletable(true)
             .addProperty(SERIAL_COM_PORT, m_com_port_prop)
             .addProperty(SERIAL_BAUDRATE, m_baudrate_prop);
