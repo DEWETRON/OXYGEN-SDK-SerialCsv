@@ -40,11 +40,21 @@ void SerialPort::start(const SerialConfig &config, const SerialLineCallback &cb)
         {
             if (ensureOpenedPort())
             {
-                m_serial->readline(m_buf, 65536, m_config.eol);
-                if (m_buf.find(m_config.eol) != std::string::npos)
+                try
                 {
-                    m_callback(m_buf);
-                    m_buf.clear();
+                    m_serial->readline(m_buf, 65536, m_config.eol);
+                    if (m_buf.find(m_config.eol) != std::string::npos)
+                    {
+                        m_callback(m_buf);
+                        m_buf.clear();
+                    }
+                }
+                catch (const std::exception&)
+                {
+                    // Fix unplugging usb serial port
+                    m_serial->close();
+                    m_serial.reset();
+                    return;
                 }
             }
         }
