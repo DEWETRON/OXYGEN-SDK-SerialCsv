@@ -180,7 +180,10 @@ public:
         catch(const boost::bad_lexical_cast&) {}
 
         m_csv_decoder.setTimeSource([host](void) { return getMasterTimestamp(host).m_ticks; });
-        m_csv_decoder.listenOnComPort({ m_com_port_prop->getValue(), baudrate });
+
+        serialcsv::SerialConfig serial_config{ m_com_port_prop->getValue(), baudrate };
+        serial_config.flowcontrol = serial::flowcontrol_hardware;
+        m_csv_decoder.listenOnComPort(serial_config);
     }
 
     void stopProcessing(odk::IfHost* host) override

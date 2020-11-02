@@ -54,7 +54,9 @@ void SerialPort::start(const SerialConfig &config, const SerialLineCallback &cb)
                     // Fix unplugging usb serial port
                     m_serial->close();
                     m_serial.reset();
-                    return;
+
+                    // do not leave thread but wait for device plugged in again
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
             }
         }
@@ -98,17 +100,17 @@ bool SerialPort::ensureOpenedPort()
             m_serial->flushInput();
             m_serial->flushOutput();
         }
-        catch (const std::invalid_argument &e)
+        catch (const std::invalid_argument &)
         {
             // Log error?
             return false;
         }
-        catch (const serial::SerialException &e)
+        catch (const serial::SerialException &)
         {
             // Log error?
             return false;
         }
-        catch (const serial::IOException &e)
+        catch (const serial::IOException &)
         {
             // Log error?
             return false;
@@ -124,17 +126,17 @@ bool SerialPort::ensureOpenedPort()
             m_serial->flushInput();
             m_serial->flushOutput();
         }
-        catch (const std::invalid_argument &e)
+        catch (const std::invalid_argument &)
         {
             // Log error?
             return false;
         }
-        catch (const serial::SerialException &e)
+        catch (const serial::SerialException &)
         {
             // Log error?
             return false;
         }
-        catch (const serial::IOException &e)
+        catch (const serial::IOException &)
         {
             // Log error?
             return false;
