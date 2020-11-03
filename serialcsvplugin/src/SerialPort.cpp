@@ -1,12 +1,18 @@
 #include "serialcsvplugin/details/SerialPort.h"
 using namespace serialcsv;
 
-SerialPort::SerialPort() : m_started(false),
-                           m_stop(false),
-                           m_serial(nullptr),
-                           m_config(""),
-                           m_buf{}
+SerialPort::SerialPort() 
+    : m_serial(nullptr)
+    , m_config("")
+    , m_callback()
+    , m_timeout(serial::Timeout::simpleTimeout(250))
+    , m_thread()
+    , m_mutex_port()
+    , m_started(false)
+    , m_stop(false)
+    , m_buf()
 {
+    
 }
 
 SerialPort::~SerialPort()
@@ -25,6 +31,11 @@ std::vector<std::string> SerialPort::enumaratePorts()
     }
 
     return ret;
+}
+
+void SerialPort::setTimeout(const serial::Timeout& timeout)
+{
+    m_timeout = timeout;
 }
 
 void SerialPort::start(const SerialConfig &config, const SerialLineCallback &cb)
@@ -90,7 +101,7 @@ bool SerialPort::ensureOpenedPort()
             m_serial = std::make_unique<serial::Serial>(
                 m_config.port,
                 m_config.baudrate,
-                serial::Timeout::simpleTimeout(250),
+                m_timeout,
                 m_config.bytesize,
                 m_config.parity,
                 m_config.stopbits,

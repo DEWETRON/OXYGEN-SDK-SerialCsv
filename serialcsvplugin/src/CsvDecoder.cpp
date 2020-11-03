@@ -17,10 +17,11 @@ void serialcsv::CsvDecoder::setTimeSource(std::function<int64_t(void)> currentTi
     m_currentTick = currentTick;
 }
 
-void serialcsv::CsvDecoder::listenOnComPort(const SerialConfig &port_config)
+void serialcsv::CsvDecoder::listenOnComPort(const SerialConfig &port_config, const serial::Timeout& timeout)
 {
     using namespace std::placeholders;
     auto cb = std::bind(&serialcsv::CsvDecoder::onLineReceived, this, _1);
+    m_serial.setTimeout(timeout);
     m_serial.start(port_config, cb);
 }
 

@@ -47,6 +47,7 @@ namespace serialcsv
         SerialPort();
         ~SerialPort();
         std::vector<std::string> enumaratePorts();
+        void setTimeout(const serial::Timeout& timeout);
         void start(const SerialConfig &portname, const SerialLineCallback& cb);
         void stop();
         bool isOpen();
@@ -61,6 +62,7 @@ namespace serialcsv
         std::unique_ptr<serial::Serial> m_serial;
         SerialConfig m_config;
         SerialLineCallback m_callback;
+        serial::Timeout m_timeout;
         std::jthread m_thread;
         std::mutex m_mutex_port;
         bool m_started;

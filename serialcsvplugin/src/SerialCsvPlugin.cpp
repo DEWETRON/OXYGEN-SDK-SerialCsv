@@ -239,6 +239,7 @@ class SerialCsvChannelPlugin : public SoftwareChannelPlugin<SerialCsvChannel>
 public:
     SerialCsvChannelPlugin()
         : m_custom_requests(std::make_shared<odk::framework::CustomRequestHandler>())
+        , m_csv_decoder()
     {
         addMessageHandler(m_custom_requests);
 
@@ -279,21 +280,67 @@ public:
         ODK_UNUSED(params);
 
         const auto serialport = params.getString("serialport");
-        const auto baudrate = params.getString("baudrate");
+        const auto baudrate_string = params.getString("baudrate");
+
+        uint64_t num_channels = 0;
+
+        m_csv_decoder.clear();
 
         if (!serialport.empty())
         {
-            // TODO scanning for incoming traffic
+            try
+            {
+                // configure serial port for channel scan
 
+                uint32_t baudrate = boost::lexical_cast<uint32_t>(baudrate_string);
+                serialcsv::SerialConfig serial_config{ serialport, baudrate };
+                serial_config.flowcontrol = serial::flowcontrol_hardware;
+
+                //serial::Timeout timeout(10, 50, 0, 0, 0);
+                //serial::Timeout timeout(10, 10, 1, 10, 1);
+                //serial::Timeout timeout(10, 10, 0, 0, 0);
+                serial::Timeout timeout(1, 1, 1, 0, 0);
+
+                serial::Serial test_port(serialport, baudrate);
+
+                if (test_port.isOpen())
+                {
+                    test_port.close();
+
+                    returns.setBool("status", true);
+
+                    m_csv_decoder.listenOnComPort(serial_config, timeout);
+
+                    // wait for 100 ms
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+                    const auto& channels = m_csv_decoder.getChannels();
+                    num_channels = channels.size();
+                    m_csv_decoder.stopListening();
+                }
+                else
+                {
+                    returns.setBool("status", false);
+                }
+            }
+            catch(boost::bad_lexical_cast&)
+            { 
+                returns.setBool("status", false);
+            }
+            catch(const std::exception&)
+            { 
+                returns.setBool("status", false);
+            }
         }
 
-        returns.setSigned("status", 0);
+        returns.setDouble("num_channels", num_channels);
 
         return odk::error_codes::OK;
     }
 
 private:
     std::shared_ptr<odk::framework::CustomRequestHandler> m_custom_requests;
+    serialcsv::CsvDecoder m_csv_decoder;
 };
 
 OXY_REGISTER_PLUGIN1("SERIAL_CSV_PLUGIN", PLUGIN_MANIFEST, SerialCsvChannelPlugin);

@@ -15,7 +15,7 @@ namespace serialcsv
         using CsvChannels = std::vector<std::unique_ptr<CsvChannel>>;
         CsvDecoder();
         
-        void listenOnComPort(const SerialConfig &port_config);
+        void listenOnComPort(const SerialConfig& port_config, const serial::Timeout& timeout = serial::Timeout());
 
         void stopListening();
 

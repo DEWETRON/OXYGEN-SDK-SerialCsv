@@ -20,6 +20,8 @@ Item{
     property string selectedBaudRate: "115200"
     property string numChannels: "1"
 
+    property var enable_controls: true
+
     function queryProperties(){
         var props = {}
 
@@ -59,6 +61,7 @@ Item{
                 model: root.availableComPorts
                 textRole: "text"
                 currentIndex: 0
+                enabled: enable_controls
                 onCurrentIndexChanged: {
                     var desc = root.availableComPorts.get(currentIndex) ? root.availableComPorts.get(currentIndex).desc : ""
                     if (desc) {
@@ -87,6 +90,7 @@ Item{
             }
 
             ComboBox{
+                enabled: enable_controls
                 model: ListModel{
                     ListElement { text: "115200" }
                     ListElement { text: "57600" }
@@ -95,7 +99,7 @@ Item{
                     ListElement { text: "9600" }
                 }
                 onCurrentIndexChanged: {
-                    //console.log(currentText + " != " + root.selectedBaudRate)
+                    console.log(currentText + " != " + root.selectedBaudRate)
                     if (currentText != root.selectedBaudRate) {
                         root.selectedBaudRate = currentText
                         selectComPort.selectComPort(root.selectedSerialPort, root.selectedBaudRate)
@@ -115,6 +119,7 @@ Item{
                 id: idNumChannels
                 text: root.numChannels
                 readOnly: false
+                enabled: enable_controls
                 validator: IntValidator{ bottom: 0; top: 10;}
                 onAccepted: {
                     root.numChannels = str(text)
@@ -172,10 +177,23 @@ Item{
             var props = plugin.createPropertyList();
             props.setString("serialport", serial_port);
             props.setString("baudrate", baudrate);
-            request(props);
+            var ret = request(props);
         }
         onResponse: {
-            //console.log("Received response: " + value.getSigned("status"));
+            var status = value.getBool("status")
+            var num_channels = value.getDouble("num_channels")
+
+            console.log("selectComPort: status=" + status + " num_channels=" + num_channels);
+            if (status) {
+                root.numChannels = parseInt(num_channels, 10)
+            }
+            else {
+                root.numChannels = 0
+            }
+        }
+
+        onRequestPendingChanged: {
+            root.enable_controls = !requestPending
         }
     }
 }
