@@ -18,15 +18,16 @@ if(NOT DEFINED ENV{OXYGEN_SDK_ROOT})
     SOURCE_DIR ${BOOST_UNPACK_PATH}
   )
 
-  #
-  # Fetch Qt resource compiler
-  message(STATUS "Fetching qt_resource_compiler.zip...")
-  FetchContent_Populate(
-    qt_resource_compiler
-    URL https://github.com/DEWETRON/OXYGEN-SDK/releases/download/OXYGEN-SDK-5.3.0/qt_resource_compiler.zip
-    SOURCE_DIR ${oxygen_SOURCE_DIR}/qt
-  )
-  
+  if(WIN32)
+    #
+    # Fetch Qt resource compiler
+    message(STATUS "Fetching qt_resource_compiler.zip...")
+    FetchContent_Populate(
+      qt_resource_compiler
+      URL https://github.com/DEWETRON/OXYGEN-SDK/releases/download/OXYGEN-SDK-5.3.0/qt_resource_compiler.zip
+      SOURCE_DIR ${oxygen_SOURCE_DIR}/qt
+    )
+  endif()
   SET(OXYGEN_SDK_ROOT ${oxygen_SOURCE_DIR}/ PARENT_SCOPE )
 else()
   message(STATUS "Using installed Oxygen-SDK from environment variable.")

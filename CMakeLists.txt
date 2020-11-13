@@ -7,7 +7,7 @@ project(serialcsv)
 option(RE2_BUILD_TESTING OFF)
 
 add_subdirectory(serialcsvplugin)
-#add_subdirectory(serialcsvnode)
+add_subdirectory(firmware)
 #add_subdirectory(test)
 
 #add_dependencies(serialcsvplugin_test serialcsvplugin serialcsvnode)
