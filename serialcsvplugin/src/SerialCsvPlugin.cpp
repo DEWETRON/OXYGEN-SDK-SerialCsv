@@ -299,7 +299,7 @@ public:
                 //serial::Timeout timeout(10, 50, 0, 0, 0);
                 //serial::Timeout timeout(10, 10, 1, 10, 1);
                 //serial::Timeout timeout(10, 10, 0, 0, 0);
-                serial::Timeout timeout(1, 1, 1, 0, 0);
+                serial::Timeout timeout(3, 3, 3, 0, 0);
 
                 serial::Serial test_port(serialport, baudrate);
 
