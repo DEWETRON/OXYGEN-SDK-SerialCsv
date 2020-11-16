@@ -36,6 +36,8 @@
 #define ETL_CPP11_SUPPORTED 1
 #define ETL_CPP11_TYPE_TRAITS_IS_TRIVIAL_SUPPORTED 0
 #define ETL_NO_STL
+#undef ETL_NO_LARGE_CHAR_SUPPORT
+#define ETL_NO_LARGE_CHAR_SUPPORT 0
 
 #elif defined(WIN32) || defined(_WIN32)
 // Allow testing and development using Windows/MSVC

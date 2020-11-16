@@ -4,6 +4,7 @@
 #include <stdexcept>
 #endif
 
+#include <etl_profile.h>
 #include "etl/string.h"
 #include "etl/array.h"
 #include "etl/string.h"
