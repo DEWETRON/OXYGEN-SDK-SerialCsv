@@ -9,6 +9,8 @@
 #include "serialcsvplugin/CsvDecoder.h"
 #include "serial/serial.h"
 #include "qml.rcc.h"
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
 
 // Manifest constains necessary metadata for oxygen plugins
@@ -68,6 +70,7 @@ public:
         : m_com_port_prop(new EditableStringProperty("COM-Port"))
         , m_baudrate_prop(new EditableStringProperty("Baudrate"))
         , m_num_channels()
+        , m_channel_names()
         , m_csv_decoder()
     {
     }
@@ -97,6 +100,10 @@ public:
         auto serialport = props.getString("SERIAL_CSV_PLUGIN/SerialPort");
         auto baudrate = props.getString("SERIAL_CSV_PLUGIN/BaudRate");
         auto numchannels = props.getString("SERIAL_CSV_PLUGIN/NumChannels");
+        auto channel_names = props.getString("SERIAL_CSV_PLUGIN/ChannelNames");
+
+        boost::split(m_channel_names, channel_names, boost::is_any_of(","));
+
         try
         {
             m_num_channels = boost::lexical_cast<uint32_t>(numchannels);
@@ -119,7 +126,16 @@ public:
     {
         for (uint32_t channel_no = 0; channel_no < m_num_channels; ++channel_no)
         {
-            std::string name = std::string("S ") + std::to_string(channel_no + 1);
+            std::string name;
+            if (channel_no <= m_channel_names.size())
+            {
+                name = m_channel_names[channel_no];
+            }
+            else
+            {
+                name = std::string("S ") + std::to_string(channel_no + 1);
+            }
+            
             auto channel = addOutputChannel(name);
             if (channel)
             {
@@ -231,6 +247,7 @@ private:
     std::shared_ptr<EditableStringProperty> m_com_port_prop;
     std::shared_ptr<EditableStringProperty> m_baudrate_prop;
     uint32_t m_num_channels;
+    std::vector<std::string> m_channel_names;
     serialcsv::CsvDecoder m_csv_decoder;
 };
 
@@ -283,6 +300,7 @@ public:
         const auto baudrate_string = params.getString("baudrate");
 
         uint64_t num_channels = 0;
+        std::string channel_names;
 
         m_csv_decoder.clear();
 
@@ -311,11 +329,24 @@ public:
 
                     m_csv_decoder.listenOnComPort(serial_config, timeout);
 
-                    // wait for 100 ms
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    // with 3 retries
+                    m_csv_decoder.requestHeader(3);
+
+                    // wait
+                    std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
                     const auto& channels = m_csv_decoder.getChannels();
                     num_channels = channels.size();
+                    
+                    for (const auto& ch : channels)
+                    {
+                        channel_names += ch->getName() + ",";
+                        if (ch->hasMax()) {  }
+                        if (ch->hasMin()) {}
+                        if (ch->hasUnit()) {}
+                    }
+                    if (!channel_names.empty()) channel_names.pop_back();
+
                     m_csv_decoder.stopListening();
                 }
                 else
@@ -334,6 +365,7 @@ public:
         }
 
         returns.setDouble("num_channels", num_channels);
+        returns.setString("channel_names", channel_names);
 
         return odk::error_codes::OK;
     }

@@ -19,6 +19,7 @@ Item{
     property string selectedSerialPort: null
     property string selectedBaudRate: "115200"
     property string numChannels: "1"
+    property string channelNames: ""
 
     property var enable_controls: true
 
@@ -28,6 +29,7 @@ Item{
         props["SERIAL_CSV_PLUGIN/SerialPort"] = root.selectedSerialPort
         props["SERIAL_CSV_PLUGIN/BaudRate"] = root.selectedBaudRate
         props["SERIAL_CSV_PLUGIN/NumChannels"] = root.numChannels
+        props["SERIAL_CSV_PLUGIN/ChannelNames"] = root.channelNames
 
         return props;
     }
@@ -190,6 +192,8 @@ Item{
             else {
                 root.numChannels = 0
             }
+
+            root.channelNames = value.getString("channel_names");
         }
 
         onRequestPendingChanged: {
