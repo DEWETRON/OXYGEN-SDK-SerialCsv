@@ -1,6 +1,5 @@
 // Copyright DEWETRON GmbH 2020
 
-
 #include <memory>
 
 #include "odkfw_properties.h"
@@ -317,8 +316,9 @@ public:
                 //serial::Timeout timeout(10, 50, 0, 0, 0);
                 //serial::Timeout timeout(10, 10, 1, 10, 1);
                 //serial::Timeout timeout(10, 10, 0, 0, 0);
-                serial::Timeout timeout(3, 3, 3, 0, 0);
+                //serial::Timeout timeout(3, 3, 3, 0, 0);
 
+                serial::Timeout timeout(3, 3, 3, 1, 1);
                 serial::Serial test_port(serialport, baudrate);
 
                 if (test_port.isOpen())
