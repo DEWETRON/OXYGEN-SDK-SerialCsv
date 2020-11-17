@@ -20,6 +20,10 @@ Item{
     property string selectedBaudRate: "115200"
     property string numChannels: "1"
     property string channelNames: ""
+    property string channelMaxs: ""
+    property string channelMins: ""
+    property string channelUnits: ""
+
 
     property var enable_controls: true
 
@@ -30,6 +34,9 @@ Item{
         props["SERIAL_CSV_PLUGIN/BaudRate"] = root.selectedBaudRate
         props["SERIAL_CSV_PLUGIN/NumChannels"] = root.numChannels
         props["SERIAL_CSV_PLUGIN/ChannelNames"] = root.channelNames
+        props["SERIAL_CSV_PLUGIN/ChannelMaxs"] = root.channelMaxs
+        props["SERIAL_CSV_PLUGIN/ChannelMins"] = root.channelMins
+        props["SERIAL_CSV_PLUGIN/ChannelUnits"] = root.channelUnits
 
         return props;
     }
@@ -183,7 +190,7 @@ Item{
         }
         onResponse: {
             var status = value.getBool("status")
-            var num_channels = value.getDouble("num_channels")
+            var num_channels = value.getDouble("NumChannels")
 
             console.log("selectComPort: status=" + status + " num_channels=" + num_channels);
             if (status) {
@@ -193,7 +200,11 @@ Item{
                 root.numChannels = 0
             }
 
-            root.channelNames = value.getString("channel_names");
+            root.channelNames = value.getString("ChannelNames");
+            root.channelMaxs  = value.getString("ChannelMaxs");
+            root.channelMins  = value.getString("ChannelMins");
+            root.channelUnits = value.getString("ChannelUnits");
+
         }
 
         onRequestPendingChanged: {

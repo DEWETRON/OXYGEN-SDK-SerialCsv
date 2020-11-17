@@ -70,6 +70,9 @@ public:
         , m_baudrate_prop(new EditableStringProperty("Baudrate"))
         , m_num_channels()
         , m_channel_names()
+        , m_channel_mins()
+        , m_channel_maxs()
+        , m_channel_units()
         , m_csv_decoder()
     {
     }
@@ -99,9 +102,6 @@ public:
         auto serialport = props.getString("SERIAL_CSV_PLUGIN/SerialPort");
         auto baudrate = props.getString("SERIAL_CSV_PLUGIN/BaudRate");
         auto numchannels = props.getString("SERIAL_CSV_PLUGIN/NumChannels");
-        auto channel_names = props.getString("SERIAL_CSV_PLUGIN/ChannelNames");
-
-        boost::split(m_channel_names, channel_names, boost::is_any_of(","));
 
         try
         {
@@ -111,6 +111,22 @@ public:
         }
         catch(const boost::bad_lexical_cast&)
         { }
+
+        if (m_num_channels > 0)
+        {
+            auto channel_names = props.getString("SERIAL_CSV_PLUGIN/ChannelNames");
+            boost::split(m_channel_names, channel_names, boost::is_any_of(","));
+
+            auto channel_mins = props.getString("SERIAL_CSV_PLUGIN/ChannelMins");
+            boost::split(m_channel_mins, channel_mins, boost::is_any_of(","));
+
+            auto channel_maxs = props.getString("SERIAL_CSV_PLUGIN/ChannelMaxs");
+            boost::split(m_channel_maxs, channel_maxs, boost::is_any_of(","));
+
+            auto channel_units = props.getString("SERIAL_CSV_PLUGIN/ChannelUnits");
+            boost::split(m_channel_units, channel_units, boost::is_any_of(","));
+        }
+
 
         if (!serialport.empty() && !baudrate.empty())
         {
@@ -130,11 +146,31 @@ public:
             {
                 name = m_channel_names[channel_no];
             }
-            else
+
+            if (name.empty())
             {
                 name = std::string("S ") + std::to_string(channel_no + 1);
             }
-            
+
+            double min_v = -10;
+            double max_v = +10;
+            std::string unit = "V";
+
+            if (!m_channel_mins[channel_no].empty())
+            {
+                min_v = std::stod(m_channel_mins[channel_no]);
+            }
+            if (!m_channel_maxs[channel_no].empty())
+            {
+                max_v = std::stod(m_channel_maxs[channel_no]);
+            }
+            if (!m_channel_units[channel_no].empty())
+            {
+                unit = m_channel_units[channel_no];
+                unit.erase(0, 1);
+                unit.erase(unit.size() - 1);
+            }
+
             auto channel = addOutputChannel(name);
             if (channel)
             {
@@ -143,7 +179,7 @@ public:
                         odk::ChannelDataformat::SampleOccurrence::ASYNC,
                         odk::ChannelDataformat::SampleFormat::DOUBLE,
                         1)
-                    .setRange({ -10, 10, "V", "V"})
+                    .setRange({ min_v, max_v, unit, unit})
                     ;
             }
         }
@@ -247,6 +283,10 @@ private:
     std::shared_ptr<EditableStringProperty> m_baudrate_prop;
     uint32_t m_num_channels;
     std::vector<std::string> m_channel_names;
+    std::vector<std::string> m_channel_mins;
+    std::vector<std::string> m_channel_maxs;
+    std::vector<std::string> m_channel_units;
+
     serialcsv::CsvDecoder m_csv_decoder;
 };
 
@@ -300,6 +340,9 @@ public:
 
         uint64_t num_channels = 0;
         std::string channel_names;
+        std::string channel_mins;
+        std::string channel_maxs;
+        std::string channel_units;
 
         m_csv_decoder.clear();
 
@@ -313,39 +356,69 @@ public:
                 serialcsv::SerialConfig serial_config{ serialport, baudrate };
                 serial_config.flowcontrol = serial::flowcontrol_hardware;
 
-                //serial::Timeout timeout(10, 50, 0, 0, 0);
-                //serial::Timeout timeout(10, 10, 1, 10, 1);
-                //serial::Timeout timeout(10, 10, 0, 0, 0);
                 //serial::Timeout timeout(3, 3, 3, 0, 0);
 
-                serial::Timeout timeout(3, 3, 3, 1, 1);
+                serial::Timeout timeout(3, 3, 3, 20, 3);
                 serial::Serial test_port(serialport, baudrate);
 
                 if (test_port.isOpen())
                 {
                     test_port.close();
 
+                    // signal port open
                     returns.setBool("status", true);
 
+                    // start receive thread
                     m_csv_decoder.listenOnComPort(serial_config, timeout);
 
-                    // with 3 retries
-                    m_csv_decoder.requestHeader(3);
+                    // request header (with retries)
+                    m_csv_decoder.requestHeader(5);
 
-                    // wait
+                    // wait for some samples
                     std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
                     const auto& channels = m_csv_decoder.getChannels();
                     num_channels = channels.size();
                     
-                    for (const auto& ch : channels)
+                    for (int i=0; i<channels.size(); ++i)
                     {
+                        const auto& ch = channels[i];
+
+                        std::string key = std::string("CH") + std::to_string(i);
+
                         channel_names += ch->getName() + ",";
-                        if (ch->hasMax()) {  }
-                        if (ch->hasMin()) {}
-                        if (ch->hasUnit()) {}
+                        if (ch->hasMax())
+                        {
+                            channel_maxs += std::to_string(ch->getMax()) + ",";
+                        }
+                        else 
+                        {
+                            channel_maxs += ",";
+                        }
+
+                        if (ch->hasMin())
+                        {
+                            channel_mins += std::to_string(ch->getMin()) + ",";
+                        }
+                        else
+                        {
+                            channel_mins += ",";
+                        }
+
+                        if (ch->hasUnit()) 
+                        {
+                            channel_units += ch->getUnit() + ",";
+                        }
+                        else
+                        {
+                            channel_units += ",";
+                        }
+
                     }
                     if (!channel_names.empty()) channel_names.pop_back();
+                    if (!channel_maxs.empty()) channel_maxs.pop_back();
+                    if (!channel_mins.empty()) channel_mins.pop_back();
+                    if (!channel_units.empty()) channel_units.pop_back();
 
                     m_csv_decoder.stopListening();
                 }
@@ -364,8 +437,11 @@ public:
             }
         }
 
-        returns.setDouble("num_channels", num_channels);
-        returns.setString("channel_names", channel_names);
+        returns.setDouble("NumChannels",  num_channels);
+        returns.setString("ChannelNames", channel_names);
+        returns.setString("ChannelMaxs",  channel_maxs);
+        returns.setString("ChannelMins",  channel_mins);
+        returns.setString("ChannelUnits", channel_units);
 
         return odk::error_codes::OK;
     }
