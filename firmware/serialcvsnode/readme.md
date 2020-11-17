@@ -1,6 +1,16 @@
 # A CSV-Node library for OXYGEN
 This library implements the CSV-Protocol as specified by the corresponding OXYGEN-DEWETRTON Plugin. It is fully compliant with the protocol and can be used to send simple CSV-Data as well as complex header request to the OXYGEN Plugin. The library is compatible with the Arduino Library system as well as platform.io as it implements the necessary [folder-structure](https://arduino.github.io/arduino-cli/latest/library-specification/). In addition, it can be easily embedded and used in any other project. The only prerequisite is C++11 compiler. **In addition, the plugin makes the great Embedded-Template-Library (ETL) available to your project.** 
 
+
+# Build steps for Arduino IDE
+Run create_arduino_library.py to create a library useable for the Arduino IDE (Python 3.8 or higher required).
+The python script creates following directory: embedded-serial-csv
+
+Copy embedded-serial-csv to the Arduino library directory. In Windows this is %HOME%\Documents\Arduino\libraries.
+
+Open the example sketch and verify/compile.
+
+
 # Usage on Arduino
 
 The following example summarizes the usage of the Plugin in a simple sketch:
