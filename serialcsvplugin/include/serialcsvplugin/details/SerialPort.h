@@ -1,3 +1,4 @@
+// Copyright Heinz-Peter Liechtenecker 2020
 #pragma once
 
 #include <string>
@@ -46,7 +47,7 @@ namespace serialcsv
 
         SerialPort();
         ~SerialPort();
-        std::vector<std::string> enumaratePorts();
+        std::vector<std::string> enumeratePorts();
         void setTimeout(const serial::Timeout& timeout);
         void start(const SerialConfig &portname, const SerialLineCallback& cb);
         void stop();

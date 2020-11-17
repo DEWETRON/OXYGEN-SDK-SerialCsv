@@ -1,3 +1,5 @@
+// Copyright Heinz-Peter Liechtenecker 2020
+
 #include "serialcsvplugin/details/SerialPort.h"
 using namespace serialcsv;
 
@@ -20,7 +22,7 @@ SerialPort::~SerialPort()
     stop();
 }
 
-std::vector<std::string> SerialPort::enumaratePorts()
+std::vector<std::string> SerialPort::enumeratePorts()
 {
     std::vector<std::string> ret;
     std::vector<serial::PortInfo> devices_found = serial::list_ports();

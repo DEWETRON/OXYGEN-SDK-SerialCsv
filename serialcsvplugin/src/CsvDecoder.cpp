@@ -1,3 +1,5 @@
+// Copyright Heinz-Peter Liechtenecker 2020
+
 #include "serialcsvplugin/CsvDecoder.h"
 #include "serialcsvplugin/CsvAdvancedProtocolLineDecoder.h"
 #include "serialcsvplugin/CsvDataLineDecoder.h"

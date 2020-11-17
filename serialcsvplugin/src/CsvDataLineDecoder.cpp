@@ -1,3 +1,5 @@
+// Copyright Heinz-Peter Liechtenecker 2020
+
 #include <re2/re2.h>
 #include "serialcsvplugin/CsvDataLineDecoder.h"
 

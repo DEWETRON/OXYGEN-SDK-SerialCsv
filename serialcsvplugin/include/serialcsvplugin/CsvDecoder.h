@@ -1,3 +1,4 @@
+// Copyright Heinz-Peter Liechtenecker 2020
 #pragma once
 
 #include <string>
