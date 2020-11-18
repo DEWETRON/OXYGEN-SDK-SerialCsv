@@ -1,0 +1,21 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "copy plugin to oxygen-path",
+            "type": "shell",
+            "command": "forfiles",
+            "args": [
+                "/p",
+                "${workspaceFolder}\\build\\",
+                "/m",
+                "*.plugin",
+                "/s",
+                "/c",
+                "cmd /c copy @path C:\\Users\\Public\\Documents\\Dewetron\\Oxygen\\Plugins\\"
+            ]
+        }
+    ]
+}
