@@ -23,8 +23,20 @@ print('Done adding ETL...')
 # Add files from the src folder
 src = os.path.join(dirname, 'src')
 shutil.copytree(src, os.path.join(dest, 'src'), dirs_exist_ok=True)
+print('Done adding Source...')
 
 #
 # Add any additional file (library.properties)
 filename = 'library.properties'
 shutil.copyfile(os.path.join(dirname, filename), os.path.join(dest, filename))
+print('Done adding additional files...')
+
+#
+# Zip the Folder to be Arduino-Compatible
+print('Make archive...')
+shutil.make_archive(os.path.join(dirname, library_name), 'zip', dest)
+
+#
+# Remove temporary directory
+print('Removing temporary files...')
+shutil.rmtree(dest)
