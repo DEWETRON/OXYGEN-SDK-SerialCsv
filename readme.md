@@ -79,10 +79,7 @@ Node to Plugin:
 ...
 ```
 
-___
-
-
-
+<!---
 ```mermaid
 sequenceDiagram
 	participant Plugin
@@ -96,6 +93,7 @@ sequenceDiagram
 	Node ->> Plugin: data with Ts prefix
 	end
 ```
+--->
 
 | Request-Summary          |             |
 | ------------------------ | ----------- |
@@ -167,6 +165,7 @@ Will again result in four channels, however, each line carries a timestamp:
 | **Channel#3** | 932.2 | 932.1 | 932.0 | 931   |
 | **Channel#5** | 11.5  | 11    | 12    | 12.2  |
 
+<!---
 ```mermaid
 sequenceDiagram
 	participant Plugin
@@ -177,13 +176,14 @@ sequenceDiagram
 	end
 
 ```
-
+-->
 ___
 
 ## Reset Timestamp `#t0`
 
 On Acquisition Restart (triggered at any time by Oxygen or the user), the plugin might ask to reset the timestamp to zero by transmitting `#t0\n` to the node.
 
+<!---
 ```mermaid
 sequenceDiagram
 	participant Plugin
@@ -198,12 +198,22 @@ sequenceDiagram
 	end
 
 ```
-
+--->
 ___
 
 # Reserved Characters
 
-The Node must not use the following characters in another context then sending an advanced protocol option:
+The Node must not use the following characters in another context (e.g. name of a channel) then sending an advanced protocol option:
 
-- #
+- \#
+
+___ 
+# Using VS-Code to build and debug the plugin
+
+To get started, Visual Studio Code with the following extensions can be used:
+- The official C/C++ extension
+- CMake Tools
+- C++ TestMate to run Unit-Tests directly inside VS-Code
+
+If you have OXYGEN installed on the default path and you start debugging, the compiled plugin gets automatically copied to the correct folder and OXYGEN is started. The Debugger will then attach to OXYGEN, allowing you to debug the plugin directly in VS-Code. To find out how this is done or how to change the default build-settings using the CMake extension, have a look at launch.json, settings.json and tasks.json.
 
