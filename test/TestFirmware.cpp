@@ -176,7 +176,7 @@ SCENARIO("Test the Serial-Csv-Node Firmware")
             }
             AND_THEN("Set different negative values on each channel")
             {
-                csvnode::Registry::instance().get("Channel-0").logValue(0.25);
+                csvnode::Registry::instance().get("Channel-0").logValue(-0.25);
                 csvnode::Registry::instance().get("Channel-1").logValue(-2.5);
                 csvnode::Registry::instance().get("Channel-2").logValue(-0.75);
                 csvnode::Registry::instance().get("Channel-3").logValue(-5);

@@ -42,7 +42,7 @@ SOFTWARE.
       #define ETL_CPP14_SUPPORTED (_MSC_VER >= 1900)
       #define ETL_CPP17_SUPPORTED (_MSC_VER >= 1914)
       #define ETL_CPP20_SUPPORTED 0
-    #elif defined(HUGE_VALL)
+    #elif defined(ETL_COMPILER_ARM5)
       #define ETL_CPP11_SUPPORTED 0
       #define ETL_CPP14_SUPPORTED 0
       #define ETL_CPP17_SUPPORTED 0
