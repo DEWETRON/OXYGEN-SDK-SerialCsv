@@ -4,8 +4,8 @@
 #include "serialcsvplugin/CsvAdvancedProtocolLineDecoder.h"
 
 const re2::RE2 serialcsv::CsvAdvancedProtocolLineDecoder::m_header_re("(#h:)");
-const re2::RE2 serialcsv::CsvAdvancedProtocolLineDecoder::m_channels_re("(([a-zA-Z0-9 \\-#:\\.°\\[\\]]+)[,;\t]?)");
-const re2::RE2 serialcsv::CsvAdvancedProtocolLineDecoder::m_channel_name_re("([a-zA-Z0-9 -]+)");
+const re2::RE2 serialcsv::CsvAdvancedProtocolLineDecoder::m_channels_re("(([a-zA-Z0-9 \\-#:\\.°\\[\\]_/]+)[,;\t]?)");
+const re2::RE2 serialcsv::CsvAdvancedProtocolLineDecoder::m_channel_name_re("([a-zA-Z0-9_ -]+)");
 const re2::RE2 serialcsv::CsvAdvancedProtocolLineDecoder::m_channel_range_re("(#r:\\s*(-?[0-9]+\\.?[0-9]*)\\s*-\\s*(-?[0-9]+\\.?[0-9]*))");
 const re2::RE2 serialcsv::CsvAdvancedProtocolLineDecoder::m_channel_min_re("(#min:\\s*(-?[0-9]+\\.?[0-9]*))");
 const re2::RE2 serialcsv::CsvAdvancedProtocolLineDecoder::m_channel_max_re("(#max:\\s*(-?[0-9]+\\.?[0-9]*))");
