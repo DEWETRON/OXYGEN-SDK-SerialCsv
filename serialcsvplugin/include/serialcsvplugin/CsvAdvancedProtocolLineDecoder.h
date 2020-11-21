@@ -28,8 +28,10 @@ namespace serialcsv
         ChannelDescriptions getChannelsMetadata() const {
             return m_channel_descriptions;
         }
+        size_t getNumberOfChannels() const {
+            return m_channel_descriptions.size();
+        }
         
-
     private:
         bool checkForHeaderData();
 
