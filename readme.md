@@ -59,7 +59,13 @@ In the following situations, the plugin might ask to transmit a header-line by s
 - When the plugin is updating its settings
 - When first csv-lines are received and header-data is missing
 
-___
+**Allowed characters for names**
+
+- a-z
+- A-Z
+- 0-9
+- Underscores
+- Dash
 
 The following example summarizes the header-data request:
 
@@ -101,8 +107,6 @@ sequenceDiagram
 | Response                 | Header-Data |
 | Node must respond within | 300 mS      |
 
-___
-
 ### Optional per-channel meta-data
 
 The node can include additional meta-data in the header request to further parametrize Oxygen directly from the Node. The following per-channel meta-data entries are supported:
@@ -130,8 +134,6 @@ Node to Plugin:
 ...
 ```
 
-___
-
 will result in the following configuration:
 
 | Channel-Name | Minimum | Maximum | Unit |
@@ -141,7 +143,15 @@ will result in the following configuration:
 | Voltage      | none    | none    | None |
 | RMS          | none    | 102.5   | None |
 
-___
+**Allowed characters for specifying a unit**
+
+- a-z
+- A-Z
+- 0-9
+- Underscores _
+- Dash -
+- Slash /
+- Degree Symbol °
 
 ## Explicit Timestamp `#t:`
 
@@ -177,8 +187,6 @@ sequenceDiagram
 
 ```
 -->
-___
-
 ## Reset Timestamp `#t0`
 
 On Acquisition Restart (triggered at any time by Oxygen or the user), the plugin might ask to reset the timestamp to zero by transmitting `#t0\n` to the node.
@@ -199,15 +207,10 @@ sequenceDiagram
 
 ```
 --->
-___
-
 # Reserved Characters
 
-The Node must not use the following characters in another context (e.g. name of a channel) then sending an advanced protocol option:
+Not every character can be used to give your channel a name or a unit as specific characters are reserved by the protocol. The allowed characters for names and units are pointed out in [Optional per-channel meta-data](#optional-per-channel-meta-data) and [Naming channels through header-data](#naming-channels-through-header-data-`#h:`).
 
-- \#
-
-___ 
 # Using VS-Code to build and debug the plugin
 
 To get started, Visual Studio Code with the following extensions can be used:
