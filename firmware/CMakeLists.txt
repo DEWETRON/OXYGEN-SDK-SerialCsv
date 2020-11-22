@@ -1,2 +1,2 @@
 
-add_subdirectory(embedded-csv-node)
+add_subdirectory(embeddedcsvnode)
