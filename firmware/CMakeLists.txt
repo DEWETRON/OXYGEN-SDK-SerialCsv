@@ -1,2 +1,2 @@
 
-add_subdirectory(serialcvsnode)
+add_subdirectory(embedded-csv-node)

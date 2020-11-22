@@ -32,4 +32,4 @@ endif()
 # Add Dependencies
 add_subdirectory(externals)
 target_link_libraries(${PROJECT_NAME} serialcsvplugin)
-target_link_libraries(${PROJECT_NAME} serialcsvnode)
+target_link_libraries(${PROJECT_NAME} embedded-csv-node)
