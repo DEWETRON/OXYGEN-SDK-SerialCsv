@@ -13,9 +13,12 @@ option(BUILD_PLUGIN_WITH_TESTS "Build Unit-Tests for both, the embedded-firmware
 if(BUILD_PLUGIN_WITH_TESTS)
     # Ensure CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS is TRUE when Building with tests
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-    add_subdirectory(test)
-    add_dependencies(serialcsvplugin_test serialcsvplugin embeddedcsvnode)
 endif()
 
 add_subdirectory(serialcsvplugin)
 add_subdirectory(firmware)
+
+if(BUILD_PLUGIN_WITH_TESTS)
+    add_subdirectory(test)
+    add_dependencies(serialcsvplugin_test serialcsvplugin embeddedcsvnode)
+endif()
