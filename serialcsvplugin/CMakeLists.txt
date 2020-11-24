@@ -122,3 +122,13 @@ add_subdirectory(externals)
 #
 # General-Plugin Options
 SetPluginOutputOptions(${PROJECT_NAME})
+
+#
+# Cache the Plugin-Output-Directory to allow a test-executeable to set its Working-Directory
+# The Output Directory is set by SetPluginOutputOptions
+# Generator-Expressions are allowed in CTest WORKING_DIRECTORY
+IF(MSVC_IDE)
+    set(OXYGEN_PLUGIN_OUTPUT_DIRECTORY_GENERATOR_EXPR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/plugins CACHE INTERNAL "")
+ELSE(MSVC_IDE)
+    set(OXYGEN_PLUGIN_OUTPUT_DIRECTORY_GENERATOR_EXPR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins CACHE INTERNAL "")
+ENDIF(MSVC_IDE)

@@ -33,3 +33,16 @@ endif()
 add_subdirectory(externals)
 target_link_libraries(${PROJECT_NAME} serialcsvplugin)
 target_link_libraries(${PROJECT_NAME} embeddedcsvnode)
+
+#
+# Register Tests for CTest
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${Catch2_SOURCE_DIR}/contrib/)
+include(CTest)
+include(ParseAndAddCatchTests)
+
+message(STATUS "When using CTest, tests will be executed in the following working directory:")
+message(STATUS "${OXYGEN_PLUGIN_OUTPUT_DIRECTORY_GENERATOR_EXPR}")
+message(STATUS "Generator-Expressions will be handeld by CTest.")
+
+set(AdditionalCatchParameters WORKING_DIRECTORY ${OXYGEN_PLUGIN_OUTPUT_DIRECTORY_GENERATOR_EXPR}) 
+ParseAndAddCatchTests(${PROJECT_NAME})
