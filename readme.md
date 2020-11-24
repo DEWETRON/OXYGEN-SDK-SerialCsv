@@ -32,6 +32,12 @@ Where Channel#1-4 are automatically added to the root channel when data is recei
 
 ___
 
+# Build status
+
+![CI Visual Studio](https://github.com/DEWETRON/OXYGEN-SDK-SerialCsv/workflows/CMake/badge.svg)
+
+
+
 # Advanced Protocol-Options
 
 To further advance the Serial-CSV-Plugin, advanced protocol options are available. Each advanced option can be triggered by the following prefix: `#cmd:` followed by the actual CSV-Line. **Implementing these functions is completely optional so that the plugin behaves similar to the Arduino Serial Plotter without further protocol knowledge.** 
