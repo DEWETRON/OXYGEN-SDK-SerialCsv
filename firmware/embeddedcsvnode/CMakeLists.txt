@@ -3,25 +3,17 @@ Include(FetchContent)
 
 project(embeddedcsvnode)
 
-if( MSVC )
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
-endif()
-
-add_library(
-        ${PROJECT_NAME}
-        src/CsvNode.cpp
-        src/details/Registry.cpp
-)
+add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME}
-    PUBLIC src/
+    INTERFACE src/
 )
 
-target_compile_definitions(${PROJECT_NAME}
-    PRIVATE CSVNODE_RUNNING_ON_OS
-)
+if(BUILD_PLUGIN_WITH_TESTS)
+    message(STATUS "CSVNode will throw exceptions when running tests.")
+    target_compile_definitions(${PROJECT_NAME}
+        INTERFACE CSVNODE_THROW_EXCEPTION
+    )
+endif()
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 add_subdirectory(externals)

@@ -17,6 +17,8 @@ add_executable(
         main.cpp
         TestCsvDataLineDecoder.cpp
         TestFirmware.cpp
+        TestFirmwareErrors.cpp
+        TestFirmwareExample.cpp
         TestCsvAdvancedProtocolLineDecoder.cpp
 )
 

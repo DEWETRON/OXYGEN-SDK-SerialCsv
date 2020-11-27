@@ -4,11 +4,13 @@ This library implements the CSV-Protocol as specified by the corresponding OXYGE
 
 # Build steps for Arduino IDE
 Run create_arduino_library.py to create a library useable for the Arduino IDE (Python 3.8 or higher required).
-The python script creates following directory: embedded-serial-csv
+The python script creates following compressed directory: embedded-serial-csv.zip
 
-Copy embedded-serial-csv to the Arduino library directory. In Windows this is %HOME%\Documents\Arduino\libraries.
+Copy embedded-serial-csv and extract to the Arduino library directory. In Windows this is `%HOME%\Documents\Arduino\libraries`. Open the example sketch and verify/compile.
 
-Open the example sketch and verify/compile.
+Alternativly, you can install the library using the Arduino-IDE:
+
+![arduino-zip-library](./img/arduino-zip-library.png)
 
 
 # Usage on Arduino
@@ -18,31 +20,29 @@ The following example summarizes the usage of the Plugin in a simple sketch:
 ```c++
 #include <CsvNode.h>
 
-// Create the Node
-csvnode::ArduinoCsvNode node("Test-Node", 100);
 size_t VOLTAGE = -1;
 
 // Option 1: Keep a reference to the channel
-csvnode::Channel& temperature = csvnode::registerChannel("Temperature");
+csvnode::Channel& temperature = CsvNode.registerChannel("Temperature");
 
 void setup() {
   // put your setup code here, to run once:
+  
+  // Setup Node-Name, Baudrate and Sampling-Interval (on the default Arduino-Monitor-Port)
+  CsvNode.begin("Test-Node", 115200, 100);
 
-  // Option 2: Simply register the channel and add optional metadata
-  csvnode::registerChannel("Current")
+  // Option 2: Simply register the channel and access later by name
+  CsvNode.registerChannel("Current")
   .setUnit("[A]")
   .setMin(-20)
   .setMax(23.2);
 
-  // Option 3: Get the Identifier of the Channel during registration
-  csvnode::registerChannel("Voltage", &VOLTAGE)
+  // Option 3: Get the Identifier/Index of the Channel during registration
+  CsvNode.registerChannel("Voltage", &VOLTAGE)
   .setUnit("[V]");
 
-  // Enable optional Timestamp-Prefix
-  node.enablePrefixTimestamp();
-
-  // Activate the Serial-Port used by the ArduinoCsvNode
-  Serial.begin(115200);
+  // Enable Timestamp-Prefix
+  CsvNode.enablePrefixTimestamp();
 }
 
 void loop() {
@@ -51,14 +51,17 @@ void loop() {
   // Option 1: Access per Reference
   temperature.logValue(random(-10, 60));
   // Option 2: Access per Name
-  csvnode::getChannel("Current").logValue(random(-20, 23.2));
+  CsvNode.getChannel("Current").logValue(random(-20, 23.2));
   // Option 3: Access per Identifier
-  csvnode::getChannel(VOLTAGE).logValue(random(0, 30));
+  CsvNode[VOLTAGE].logValue(random(0, 30));
   
   // Ensure node can do its work
-  node.run();
+  CsvNode.run();
 }
+
 ```
+
+The library provides a default `CsvNode` which takes ownership of the default Arduino serial port.
 
 # Implementing another Hardware-System
 
@@ -82,6 +85,11 @@ struct CustomSerial
     {
         // return the number of available bytes
         return available;
+    }
+
+    void begin(const unsigned long baudrate)
+    {
+        // if necessary, set the baudrate
     }
 };
 
@@ -114,30 +122,42 @@ struct CustomClock
 // Now the define the custom type
 using CustomCsvNode = csvnode::SerialCsvNode<CustomClock, CustomSerial>;
 ```
+Take care that the Serial-Port must be stateless!
 
 # Memory and Customization
 
-The library does not allocate any dynamic memory. Strings are stored in static allocated arrays. The memory-usage and other settings can be optimized by providing the following defines before including `<CsvNode.h>`:
+The library does not allocate any dynamic memory. The buffers for outgoing and incoming strings are implemented as static allocated arrays, names and units are stored as string literals.
 
-- **CSVNODE_NUM_CHANNELS** 
+The `CsvNode` default settings are:
 
-  (default: 5) set the number of channels to be provided by the registry
+- `NUM_CHANNELS` The library reserves memory for 5 channels
+- `DECIMAL_PRECISION` The library sends floating points with a decimal precision of 2
+- `OUTGOING_BUFFER_SIZE` The library reserves 100 characters in RAM to send strings 
 
-- **CSVNODE_MAX_LENGTH_NAME_STRING** 
+ The library can be customised by creating a custom type:
 
-  (default: 20) the maximum length of the channel-names
+```c++
+#include <CsvNode.h>
 
-- **CSVNODE_MAX_LENGTH_SHORT_STRING** 
+// Create a Node with 10 Channels
+using myCsvNodeType = csvnode::SerialCsvNode<csvnode::ArduinoClock, csvnode::ArduinoSerial, 10>;
+myCsvNodeType myCsvNode;
+```
 
-  (default: 5) the maximum length of short strings like the unit metadata property
+The following parameters can be changed:
 
-- **CSVNODE_MAX_LENGTH_CSV_STRING** 
+```c++
+template <typename Clock,
+          typename Serial,
+          size_t NUM_CHANNELS = 5,
+          uint32_t DECIMAL_PRECISION = 2,
+          size_t OUTGOING_BUFFER_SIZE = 100,
+         size_t INCOMING_BUFFER_SIZE = 10>
+class SerialCsvNode
+```
 
-  (default: MAX_LENGTH_NAME_STRING * NUM_CHANNELS) the maximum length of the internal buffer
 
-- **CSVNODE_DECIMAL_PRECISION** 
-
-  (default: 2) the precision decimal precision of the CSV-String
+In addition, the following preprocessor definitions can be passed to the command line of the compiler to further customize the behavior
 
 - **CSVNODE_EOL** 
 
@@ -147,16 +167,13 @@ The library does not allocate any dynamic memory. Strings are stored in static a
 
   (default: ",") the separator
 
-For example, one can simply optimize memory and change the separator by providing the following defines:
-
-```c++
-#define CSVNODE_SEP ";"
-#define CSVNODE_NUM_CHANNELS 3
-#include <CsvNode.h>
-...
-```
-
 Further information can be found in `CsvNodeProfile.h`.
+
+# Error Management
+
+The library has a custom error handling. When an error occurs (e.g. you are trying to get a channel which was not registered, the buffer for outgoing strings is running out of memory...), the library will write the error-string to the serial port and then stop execution of the program:
+
+![error-handling](./img/error-handling.png)
 
 # Dependencies
 
