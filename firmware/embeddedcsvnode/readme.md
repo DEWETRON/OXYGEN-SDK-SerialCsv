@@ -1,16 +1,23 @@
 # A CSV-Node library for OXYGEN
-This library implements the CSV-Protocol as specified by the corresponding OXYGEN-DEWETRTON Plugin. It is fully compliant with the protocol and can be used to send simple CSV-Data as well as complex header request to the OXYGEN Plugin. The library is compatible with the Arduino Library system as well as platform.io as it implements the necessary [folder-structure](https://arduino.github.io/arduino-cli/latest/library-specification/). In addition, it can be easily embedded and used in any other project. The only prerequisite is C++11 compiler. **In addition, the plugin makes the great Embedded-Template-Library (ETL) available to your project.** 
+With this library, you can send well-formatted CSV-Strings to [OXYGEN](https://www.dewetron.com/products/oxygen-measurement-software/) and any other serial monitor software. It offers a simple, Arduino-Like API. The OXYGEN measurement software is the most intuitive, all-in-one software in the data acquisition sector for measurement, visualization, and analysis for many applications.
+
+The library implements the advananced CSV-Protocol options as specified by the corresponding OXYGEN-DEWETRTON Plugin. It  can be used to send simple CSV-Data as well as complex header request to the OXYGEN Plugin. The library is compatible with the Arduino Library system as well as platform.io as it implements the necessary [folder-structure](https://arduino.github.io/arduino-cli/latest/library-specification/). In addition, it can be easily embedded and used in any other project. The only prerequisite is C++11 compiler. **In addition, the plugin makes the great Embedded-Template-Library (ETL) available to your project.** 
 
 
 # Build steps for Arduino IDE
-Run create_arduino_library.py to create a library useable for the Arduino IDE (Python 3.8 or higher required).
-The python script creates following compressed directory: embedded-serial-csv.zip
+Run `create_arduino_library.py` to create a library useable with the Arduino IDE (Python 3.8 or higher required). The python script creates a compressed directory: `embedded-serial-csv.zip`
 
-Copy embedded-serial-csv and extract to the Arduino library directory. In Windows this is `%HOME%\Documents\Arduino\libraries`. Open the example sketch and verify/compile.
+Copy `embedded-serial-csv.zip` to the Arduino library directory and extract it. In Windows this is `%HOME%\Documents\Arduino\libraries`. Then open the example sketch and verify/compile.
 
 Alternativly, you can install the library using the Arduino-IDE:
 
-![arduino-zip-library](./img/arduino-zip-library.png)
+
+
+<p align="center">
+    <img width="460" src="./img/arduino-zip-library.png">
+</p>
+
+
 
 
 # Usage on Arduino
