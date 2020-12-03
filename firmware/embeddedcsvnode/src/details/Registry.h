@@ -1,106 +1,150 @@
 #pragma once
 
-#include "../CsvNodeProfile.h"
-#include "../Channel.h"
-
 #include "etl/array.h"
+#include "../Channel.h"
 
 namespace csvnode
 {
-    class Registry
+    namespace details
     {
-        // Make the Iterator a Friend so that it can access the array
-        template <typename T>
-        friend class RegistryIteratorType;
 
-    public:
-        using ChannelArray = etl::array<Channel, details::NUM_CHANNELS>;
-        static Registry &instance()
+        template <typename Serial, size_t NUM_CHANNELS>
+        class Registry
         {
-            static Registry reg;
-            return reg;
-        }
-        Channel &operator[](size_t idx)
-        {
-            if (idx >= details::NUM_CHANNELS)
+            // Make the Iterator a Friend so that it can access the array
+            template <typename T>
+            friend class RegistryIteratorType;
+
+        public:
+            using ChannelArray = etl::array<Channel, NUM_CHANNELS>;
+            Registry() : m_idx(0){};
+            Registry(const Registry &) = delete;
+            const Registry &operator=(const Registry &) = delete;
+
+            Channel &operator[](size_t idx)
             {
-                details::throwCsvNodeEx("Out of rane.");
+                if (idx >= NUM_CHANNELS)
+                {
+                    details::throwCsvNodeEx<Serial>("Out of range.");
+                }
+
+                return m_channels[idx];
             }
 
-            return m_channels[idx];
-        }
-        Channel &registerChannel(const details::NameString &name, size_t *idx = nullptr);
-        Channel &get(const details::NameString &name);
-        void clear();
-        size_t getSize() const
+            Channel &registerChannel(const etl::string_view &name, size_t *idx = nullptr)
+            {
+                Channel new_channel(name);
+                if (m_idx > (NUM_CHANNELS - 1))
+                {
+                    details::throwCsvNodeEx<Serial>("Out of channels. Increase NUM_CHANNELS.");
+                }
+
+                if (exists(new_channel.getName()) != nullptr)
+                {
+                    details::throwCsvNodeEx<Serial>("Channel already exists.");
+                }
+
+                m_channels[m_idx] = etl::move(new_channel);
+
+                if (idx)
+                {
+                    *idx = m_idx;
+                }
+
+                m_idx++;
+
+                return m_channels[m_idx - 1];
+            }
+
+            Channel &get(const etl::string_view &name)
+            {
+                auto ch = exists(name);
+
+                if (ch == nullptr)
+                {
+                    details::throwCsvNodeEx<Serial>("Channel does not exist.");
+                }
+                return *ch;
+            }
+
+            void clear()
+            {
+                for (auto &channel : m_channels)
+                {
+                    // Overwrite with default constructor
+                    channel = Channel();
+                }
+                m_idx = 0;
+            }
+
+            size_t getSize() const
+            {
+                return m_idx; //The actual size is always the current idx
+            }
+
+        private:
+            Channel *exists(const etl::string_view &name)
+            {
+                auto it = etl::find_if(m_channels.begin(), m_channels.end(), [&](Channel &channel) {
+                    return channel.getName() == name;
+                });
+
+                if (it != m_channels.end())
+                {
+                    return it;
+                }
+                else
+                {
+                    return nullptr;
+                }
+            }
+
+            ChannelArray m_channels = {};
+            size_t m_idx;
+        };
+
+        template <typename T>
+        class RegistryIteratorType
         {
-            return m_idx; //The actual size is always the current idx
-        }
+        public:
+            RegistryIteratorType(T &collection, size_t const index) : index(index), collection(collection)
+            {
+            }
 
-    private:
-        Registry() : m_idx(0){};
-        Registry(const Registry &) = delete;
-        const Registry &operator=(const Registry &) = delete;
+            bool operator!=(RegistryIteratorType const &other) const
+            {
+                return index != other.index;
+            }
 
-        Channel *exists(const details::NameString &name);
+            Channel &operator*() const
+            {
+                return collection.m_channels[index];
+            }
 
-        ChannelArray m_channels = {};
-        size_t m_idx;
-    };
+            RegistryIteratorType const &operator++()
+            {
+                ++index;
+                return *this;
+            }
 
-    template <typename T>
-    class RegistryIteratorType
-    {
-    public:
-        RegistryIteratorType(T &collection, size_t const index) : index(index), collection(collection)
+        private:
+            size_t index;
+            T &collection;
+        };
+
+        template <typename Serial, size_t NUM_CHANNELS>
+        using RegistryIterator = RegistryIteratorType<Registry<Serial, NUM_CHANNELS>>;
+
+        template <typename Serial, size_t NUM_CHANNELS>
+        inline RegistryIterator<Serial, NUM_CHANNELS> begin(Registry<Serial, NUM_CHANNELS> &collection)
         {
+            return RegistryIterator<Serial, NUM_CHANNELS>(collection, 0);
         }
 
-        bool operator!=(RegistryIteratorType const &other) const
+        template <typename Serial, size_t NUM_CHANNELS>
+        inline RegistryIterator<Serial, NUM_CHANNELS> end(Registry<Serial, NUM_CHANNELS> &collection)
         {
-            return index != other.index;
+            return RegistryIterator<Serial, NUM_CHANNELS>(collection, collection.getSize());
         }
-
-        Channel &operator*() const
-        {
-            return collection.m_channels[index];
-        }
-
-        RegistryIteratorType const &operator++()
-        {
-            ++index;
-            return *this;
-        }
-
-    private:
-        size_t index;
-        T &collection;
-    };
-
-    using RegistryIterator = RegistryIteratorType<Registry>;
-
-    inline RegistryIterator begin(Registry &collection)
-    {
-        return RegistryIterator(collection, 0);
-    }
-
-    inline RegistryIterator end(Registry &collection)
-    {
-        return RegistryIterator(collection, collection.getSize());
-    }
-
-    inline Channel &registerChannel(const details::NameString &name, size_t *idx = nullptr)
-    {
-        return Registry::instance().registerChannel(name, idx);
-    }
-
-    inline Channel &getChannel(const details::NameString &name)
-    {
-        return Registry::instance().get(name);
-    }
-
-    inline Channel &getChannel(const size_t idx)
-    {
-        return Registry::instance()[idx];
-    }
+    } // namespace details
 } // namespace csvnode

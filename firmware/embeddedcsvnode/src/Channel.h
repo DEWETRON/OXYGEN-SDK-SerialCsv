@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CsvNodeProfile.h"
 #include "etl/visitor.h"
 
 namespace csvnode
@@ -19,19 +18,23 @@ namespace csvnode
     public:
         Channel()
         {
-            m_is_valid = false;
+            m_value = 0;
+            m_min = 0;
+            m_max = 0;
             m_has_minimum = false;
             m_has_maximum = false;
             m_has_unit = false;
         }
-        Channel(const details::NameString &name) : m_name(name), m_value(0.0)
+        Channel(const etl::string_view& name) : m_name(name)
         {
-            m_is_valid = true;
+            m_value = 0;
+            m_min = 0;
+            m_max = 0;
             m_has_minimum = false;
             m_has_maximum = false;
             m_has_unit = false;
         }
-        details::NameString getName() const
+        const etl::string_view &getName() const
         {
             return m_name;
         }
@@ -44,13 +47,13 @@ namespace csvnode
         {
             return m_value;
         }
-        Channel &setUnit(const details::ShortString &u)
+        Channel &setUnit(const etl::string_view& u)
         {
             m_unit = u;
             m_has_unit = true;
             return *this;
         }
-        details::ShortString getUnit()
+        const etl::string_view &getUnit()
         {
             return m_unit;
         }
@@ -92,12 +95,11 @@ namespace csvnode
         }
 
     private:
-        details::NameString m_name;
-        details::ShortString m_unit;
+        etl::string_view m_name;
+        etl::string_view m_unit;
         double m_min;
         double m_max;
         double m_value;
-        bool m_is_valid;
         bool m_has_minimum;
         bool m_has_maximum;
         bool m_has_unit;
