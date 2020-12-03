@@ -26,18 +26,21 @@ namespace csvnode
 #else
         constexpr char SEP[2] = ",";
 #endif
-
-        // This function must either throw an exception or interrupt execution of the program
-        template<typename Serial>
-        static inline void throwCsvNodeEx(etl::string_view msg)
+        class SerialPort
         {
-            Serial port;
-            port.write(msg.data(), msg.length());
+        public:
+            virtual void write(const etl::string_view msg) = 0;
+        };
+
+        static inline void throwCsvNodeEx(SerialPort& port, const etl::string_view msg)
+        {
+            port.write(msg);
 
 #ifdef CSVNODE_THROW_EXCEPTION
-        throw std::runtime_error(msg.data());
+            throw std::runtime_error(msg.data());
 #endif
-            while(true);
+            while (true)
+                ;
         }
     } // namespace details
 } // namespace csvnode
