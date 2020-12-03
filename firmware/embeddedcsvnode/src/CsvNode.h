@@ -7,6 +7,7 @@
 #include "etl/visitor.h"
 
 #include "details/Registry.h"
+#include "details/Visitors.h"
 #include "Channel.h"
 
 #ifdef ARDUINO
@@ -15,36 +16,24 @@
 
 namespace csvnode
 {
-    namespace details
-    {
-        // The buffer shared between the Node and the Visitors
-        extern CsvString buffer;
-        class CreateSampleCsv : public ChannelVisitor
-        {
-        public:
-            void visit(Channel &ch);
-        };
-
-        class CreateHeaderCsv : public ChannelVisitor
-        {
-        public:
-            void visit(Channel &ch);
-        };
-    } // namespace details
-
-    template <typename Clock, typename Serial>
+    template <typename Clock,
+              typename Serial,
+              size_t NUM_CHANNELS = 5,
+              uint32_t DECIMAL_PRECISION = 2,
+              size_t OUTGOING_BUFFER_SIZE = 100,
+              size_t INCOMING_BUFFER_SIZE = 10>
     class SerialCsvNode
     {
     public:
-        SerialCsvNode(const details::NameString name, const unsigned int Ts);
+        SerialCsvNode();
         void process();
         void enablePrefixTimestamp()
         {
             m_prefix_timestamp = true;
         }
-        details::CsvString &getCurrentBuffer() const
+        etl::string<OUTGOING_BUFFER_SIZE> &getCurrentBuffer() const
         {
-            return details::buffer;
+            return m_buffer;
         }
         Clock &getClock()
         {
@@ -54,73 +43,173 @@ namespace csvnode
         {
             return m_serial;
         }
+        details::Registry<Serial, NUM_CHANNELS> &getRegistry()
+        {
+            return m_registry;
+        }
+        Channel &registerChannel(const etl::string_view &name, size_t *idx = nullptr)
+        {
+            return m_registry.registerChannel(name, idx);
+        }
+        Channel &getChannel(const etl::string_view &name)
+        {
+            return m_registry.get(name);
+        }
+        Channel &getChannel(const size_t idx)
+        {
+            return m_registry[idx];
+        }
+        Channel &operator[](size_t idx)
+        {
+            return m_registry[idx];
+        }
+        size_t getSize() const
+        {
+            return m_registry.getSize();
+        }
+
+        void begin(const etl::string_view &name, const unsigned long baudrate, const unsigned int Ts)
+        {
+            m_name = name;
+            m_sampling_interval = Ts;
+            m_begin_called = true;
+            m_sample_visitor.setBuffer(&m_buffer);
+            m_header_visitor.setBuffer(&m_buffer);
+            m_serial.begin(baudrate);
+        }
         void run();
 
     private:
         void sample();
         void sendHeader();
+        etl::string_view m_name;
+        bool m_prefix_timestamp;
+        bool m_begin_called;
 
         Serial m_serial;
         Clock m_clock;
         typename Clock::milliseconds m_sampling_interval;
         typename Clock::milliseconds m_last_sampling_timepoint;
-        bool m_prefix_timestamp;
-        details::NameString m_name;
-        details::CreateSampleCsv m_sample_visitor;
-        details::CreateHeaderCsv m_header_visitor;
-        details::IncomingString m_read_buffer;
+
+        // The Channel-Registry
+        details::Registry<Serial, NUM_CHANNELS> m_registry;
+
+        // The Visitors for creating CSV-Strings
+        details::CreateSampleCsv<OUTGOING_BUFFER_SIZE, DECIMAL_PRECISION> m_sample_visitor;
+        details::CreateHeaderCsv<OUTGOING_BUFFER_SIZE, DECIMAL_PRECISION> m_header_visitor;
+
+        // Buffer in RAM for incoming Strings
+        etl::string<INCOMING_BUFFER_SIZE> m_read_buffer;
+
+        // Buffer in RAM for outgoing Strings
+        etl::string<OUTGOING_BUFFER_SIZE> m_buffer;
     };
 
-    template <typename Clock, typename Serial>
-    SerialCsvNode<Clock, Serial>::SerialCsvNode(const details::NameString name,
-                                                const unsigned int sampling_interval)
-        : m_sampling_interval(sampling_interval),
+    template <typename Clock,
+              typename Serial,
+              size_t NUM_CHANNELS,
+              uint32_t DECIMAL_PRECISION,
+              size_t OUTGOING_BUFFER_SIZE,
+              size_t INCOMING_BUFFER_SIZE>
+    SerialCsvNode<Clock,
+                  Serial,
+                  NUM_CHANNELS,
+                  DECIMAL_PRECISION,
+                  OUTGOING_BUFFER_SIZE,
+                  INCOMING_BUFFER_SIZE>::SerialCsvNode()
+        : m_sampling_interval(0),
           m_last_sampling_timepoint(0),
           m_prefix_timestamp(false),
-          m_name(move(name))
-
+          m_begin_called(false)
     {
     }
 
-    template <typename Clock, typename Serial>
-    void SerialCsvNode<Clock, Serial>::sample()
+    template <typename Clock,
+              typename Serial,
+              size_t NUM_CHANNELS,
+              uint32_t DECIMAL_PRECISION,
+              size_t OUTGOING_BUFFER_SIZE,
+              size_t INCOMING_BUFFER_SIZE>
+    void SerialCsvNode<Clock,
+                       Serial,
+                       NUM_CHANNELS,
+                       DECIMAL_PRECISION,
+                       OUTGOING_BUFFER_SIZE,
+                       INCOMING_BUFFER_SIZE>::sample()
     {
-        details::buffer.clear();
+        m_buffer.clear();
 
         if (m_prefix_timestamp)
         {
-            details::buffer += "#t:";
-            etl::to_string(m_clock.now(), details::buffer, true);
-            details::buffer += details::SEP;
+            m_buffer += "#t:";
+            etl::to_string(m_clock.now(), m_buffer, true);
+            m_buffer += details::SEP;
         }
 
-        for (auto &&channel : Registry::instance())
+        for (auto &&channel : m_registry)
         {
             channel.accept(m_sample_visitor);
         }
 
-        details::buffer += details::EOL;
-        m_serial.write(details::buffer.c_str(), details::buffer.size());
+        m_buffer += details::EOL;
+
+        if (m_buffer.is_truncated())
+        {
+            details::throwCsvNodeEx<Serial>("The CSV-Node Buffer is truncated. Increase size!");
+        }
+
+        m_serial.write(m_buffer.c_str(), m_buffer.size());
     }
 
-    template <typename Clock, typename Serial>
-    void SerialCsvNode<Clock, Serial>::sendHeader()
+    template <typename Clock,
+              typename Serial,
+              size_t NUM_CHANNELS,
+              uint32_t DECIMAL_PRECISION,
+              size_t OUTGOING_BUFFER_SIZE,
+              size_t INCOMING_BUFFER_SIZE>
+    void SerialCsvNode<Clock,
+                       Serial,
+                       NUM_CHANNELS,
+                       DECIMAL_PRECISION,
+                       OUTGOING_BUFFER_SIZE,
+                       INCOMING_BUFFER_SIZE>::sendHeader()
     {
-        details::buffer.clear();
-        details::buffer += "#h:";
-        for (auto &&channel : Registry::instance())
+        m_buffer.clear();
+        m_buffer += "#h:";
+        for (auto &&channel : m_registry)
         {
             channel.accept(m_header_visitor);
         }
 
-        details::buffer += details::EOL;
-        m_serial.write(details::buffer.c_str(), details::buffer.size());
+        m_buffer += details::EOL;
+
+        if (m_buffer.is_truncated())
+        {
+            details::throwCsvNodeEx<Serial>("The CSV-Node Buffer is truncated. Increase size!");
+        }
+
+        m_serial.write(m_buffer.c_str(), m_buffer.size());
     }
 
-    template <typename Clock, typename Serial>
-    void SerialCsvNode<Clock, Serial>::run()
+    template <typename Clock,
+              typename Serial,
+              size_t NUM_CHANNELS,
+              uint32_t DECIMAL_PRECISION,
+              size_t OUTGOING_BUFFER_SIZE,
+              size_t INCOMING_BUFFER_SIZE>
+    void SerialCsvNode<Clock,
+                       Serial,
+                       NUM_CHANNELS,
+                       DECIMAL_PRECISION,
+                       OUTGOING_BUFFER_SIZE,
+                       INCOMING_BUFFER_SIZE>::run()
     {
         static bool first_run = true;
+
+        if (!m_begin_called)
+        {
+            return;
+        }
 
         if (first_run)
         {
@@ -132,7 +221,7 @@ namespace csvnode
         while (m_serial.available())
         {
             m_read_buffer += static_cast<char>(m_serial.read());
-            if (m_read_buffer.find("\n") != details::IncomingString::npos)
+            if (m_read_buffer.find("\n") != etl::string<INCOMING_BUFFER_SIZE>::npos)
             {
                 if (m_read_buffer == "#h\n")
                 {
@@ -162,19 +251,25 @@ namespace csvnode
 #ifdef ARDUINO
     struct ArduinoSerial
     {
+        // Use SERIAL_PORT_MONITOR define from Arduino Core for the default Arduino Implementation
         void write(const char *c, size_t len)
         {
-            Serial.write(c, len);
+            SERIAL_PORT_MONITOR.write(c, len);
         }
 
         int read()
         {
-            return Serial.read();
+            return SERIAL_PORT_MONITOR.read();
         }
 
         unsigned int available()
         {
-            return Serial.available();
+            return SERIAL_PORT_MONITOR.available();
+        }
+
+        void begin(const unsigned long baudrate)
+        {
+            SERIAL_PORT_MONITOR.begin(baudrate);
         }
     };
 
@@ -198,7 +293,11 @@ namespace csvnode
 
         milliseconds offset;
     };
-    using ArduinoCsvNode = SerialCsvNode<ArduinoClock, ArduinoSerial>;
+    using DefaultArduinoCsvNode = SerialCsvNode<ArduinoClock, ArduinoSerial>;
 #endif
-
 } // namespace csvnode
+
+#ifdef ARDUINO
+// The one and only Default-Serial-Node Instance (which only gets linked on usage)
+extern csvnode::DefaultArduinoCsvNode CsvNode;
+#endif

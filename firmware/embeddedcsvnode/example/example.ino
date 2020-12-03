@@ -1,31 +1,28 @@
 #include <CsvNode.h>
 
-// Create the Node
-csvnode::ArduinoCsvNode node("Test-Node", 100);
 size_t VOLTAGE = -1;
 
 // Option 1: Keep a reference to the channel
-csvnode::Channel& temperature = csvnode::registerChannel("Temperature");
+csvnode::Channel& temperature = CsvNode.registerChannel("Temperature");
 
 void setup() {
   // put your setup code here, to run once:
+  
+  // Setup Node-Name, Baudrate and Sampling-Interval (on the default Arduino-Monitor-Port)
+  CsvNode.begin("Test-Node", 115200, 100);
 
-  // Option 2: Simply register the channel
-  csvnode::registerChannel("Current")
+  // Option 2: Simply register the channel and access later by name
+  CsvNode.registerChannel("Current")
   .setUnit("[A]")
   .setMin(-20)
   .setMax(23.2);
 
-  // Option 3: Get the Identifier of the Channel during registration
-  csvnode::registerChannel("Voltage", &VOLTAGE)
+  // Option 3: Get the Identifier/Index of the Channel during registration
+  CsvNode.registerChannel("Voltage", &VOLTAGE)
   .setUnit("[V]");
 
   // Enable Timestamp-Prefix
-  node.enablePrefixTimestamp();
-
-  // Activate the Serial-Port used by the ArduinoCsvNode
-  //Serial.begin(115200);
-  Serial.begin(9600);
+  CsvNode.enablePrefixTimestamp();
 }
 
 void loop() {
@@ -34,10 +31,10 @@ void loop() {
   // Option 1: Access per Reference
   temperature.logValue(random(-10, 60));
   // Option 2: Access per Name
-  csvnode::getChannel("Current").logValue(random(-20, 23.2));
+  CsvNode.getChannel("Current").logValue(random(-20, 23.2));
   // Option 3: Access per Identifier
-  csvnode::getChannel(VOLTAGE).logValue(random(0, 30));
+  CsvNode[VOLTAGE].logValue(random(0, 30));
   
   // Ensure node can do its work
-  node.run();
+  CsvNode.run();
 }
