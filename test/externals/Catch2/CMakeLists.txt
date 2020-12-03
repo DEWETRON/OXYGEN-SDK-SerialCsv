@@ -9,3 +9,5 @@ FetchContent_MakeAvailable(Catch2)
 target_include_directories(${PROJECT_NAME} PRIVATE
      ${Catch2_SOURCE_DIR}/single_include/
 )
+
+target_link_libraries(${PROJECT_NAME} Catch2::Catch2)
