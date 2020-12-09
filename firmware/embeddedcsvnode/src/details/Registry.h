@@ -8,7 +8,7 @@ namespace csvnode
     namespace details
     {
 
-        template <typename Serial, size_t NUM_CHANNELS>
+        template <size_t NUM_CHANNELS>
         class Registry
         {
             // Make the Iterator a Friend so that it can access the array
@@ -17,7 +17,7 @@ namespace csvnode
 
         public:
             using ChannelArray = etl::array<Channel, NUM_CHANNELS>;
-            Registry() : m_idx(0){};
+            Registry(details::SerialPort& serial_port) : m_idx(0), m_serial_port(serial_port) {};
             Registry(const Registry &) = delete;
             const Registry &operator=(const Registry &) = delete;
 
@@ -25,7 +25,7 @@ namespace csvnode
             {
                 if (idx >= NUM_CHANNELS)
                 {
-                    details::throwCsvNodeEx<Serial>("Out of range.");
+                    details::throwCsvNodeEx(m_serial_port, "Out of range.");
                 }
 
                 return m_channels[idx];
@@ -36,12 +36,12 @@ namespace csvnode
                 Channel new_channel(name);
                 if (m_idx > (NUM_CHANNELS - 1))
                 {
-                    details::throwCsvNodeEx<Serial>("Out of channels. Increase NUM_CHANNELS.");
+                    details::throwCsvNodeEx(m_serial_port, "Out of channels. Increase NUM_CHANNELS.");
                 }
 
                 if (exists(new_channel.getName()) != nullptr)
                 {
-                    details::throwCsvNodeEx<Serial>("Channel already exists.");
+                    details::throwCsvNodeEx(m_serial_port, "Channel already exists.");
                 }
 
                 m_channels[m_idx] = etl::move(new_channel);
@@ -62,7 +62,7 @@ namespace csvnode
 
                 if (ch == nullptr)
                 {
-                    details::throwCsvNodeEx<Serial>("Channel does not exist.");
+                    details::throwCsvNodeEx(m_serial_port, "Channel does not exist.");
                 }
                 return *ch;
             }
@@ -101,6 +101,7 @@ namespace csvnode
 
             ChannelArray m_channels = {};
             size_t m_idx;
+            details::SerialPort& m_serial_port;
         };
 
         template <typename T>
@@ -132,19 +133,19 @@ namespace csvnode
             T &collection;
         };
 
-        template <typename Serial, size_t NUM_CHANNELS>
-        using RegistryIterator = RegistryIteratorType<Registry<Serial, NUM_CHANNELS>>;
+        template <size_t NUM_CHANNELS>
+        using RegistryIterator = RegistryIteratorType<Registry<NUM_CHANNELS>>;
 
-        template <typename Serial, size_t NUM_CHANNELS>
-        inline RegistryIterator<Serial, NUM_CHANNELS> begin(Registry<Serial, NUM_CHANNELS> &collection)
+        template <size_t NUM_CHANNELS>
+        inline RegistryIterator<NUM_CHANNELS> begin(Registry<NUM_CHANNELS> &collection)
         {
-            return RegistryIterator<Serial, NUM_CHANNELS>(collection, 0);
+            return RegistryIterator<NUM_CHANNELS>(collection, 0);
         }
 
-        template <typename Serial, size_t NUM_CHANNELS>
-        inline RegistryIterator<Serial, NUM_CHANNELS> end(Registry<Serial, NUM_CHANNELS> &collection)
+        template <size_t NUM_CHANNELS>
+        inline RegistryIterator<NUM_CHANNELS> end(Registry<NUM_CHANNELS> &collection)
         {
-            return RegistryIterator<Serial, NUM_CHANNELS>(collection, collection.getSize());
+            return RegistryIterator<NUM_CHANNELS>(collection, collection.getSize());
         }
     } // namespace details
 } // namespace csvnode

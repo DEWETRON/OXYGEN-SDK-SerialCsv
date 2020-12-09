@@ -129,7 +129,6 @@ struct CustomClock
 // Now the define the custom type
 using CustomCsvNode = csvnode::SerialCsvNode<CustomClock, CustomSerial>;
 ```
-Take care that the Serial-Port must be stateless!
 
 # Memory and Customization
 

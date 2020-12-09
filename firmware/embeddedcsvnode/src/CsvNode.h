@@ -22,7 +22,7 @@ namespace csvnode
               uint32_t DECIMAL_PRECISION = 2,
               size_t OUTGOING_BUFFER_SIZE = 100,
               size_t INCOMING_BUFFER_SIZE = 10>
-    class SerialCsvNode
+    class SerialCsvNode : public details::SerialPort
     {
     public:
         SerialCsvNode();
@@ -43,7 +43,11 @@ namespace csvnode
         {
             return m_serial;
         }
-        details::Registry<Serial, NUM_CHANNELS> &getRegistry()
+        void write(const etl::string_view msg) override
+        {
+            m_serial.write(msg.data(), msg.length());
+        }
+        details::Registry<NUM_CHANNELS> &getRegistry()
         {
             return m_registry;
         }
@@ -92,7 +96,7 @@ namespace csvnode
         typename Clock::milliseconds m_last_sampling_timepoint;
 
         // The Channel-Registry
-        details::Registry<Serial, NUM_CHANNELS> m_registry;
+        details::Registry<NUM_CHANNELS> m_registry;
 
         // The Visitors for creating CSV-Strings
         details::CreateSampleCsv<OUTGOING_BUFFER_SIZE, DECIMAL_PRECISION> m_sample_visitor;
@@ -120,7 +124,8 @@ namespace csvnode
         : m_sampling_interval(0),
           m_last_sampling_timepoint(0),
           m_prefix_timestamp(false),
-          m_begin_called(false)
+          m_begin_called(false),
+          m_registry(*this)
     {
     }
 
@@ -155,7 +160,7 @@ namespace csvnode
 
         if (m_buffer.is_truncated())
         {
-            details::throwCsvNodeEx<Serial>("The CSV-Node Buffer is truncated. Increase size!");
+            details::throwCsvNodeEx(*this, "The CSV-Node Buffer is truncated. Increase size!");
         }
 
         m_serial.write(m_buffer.c_str(), m_buffer.size());
@@ -185,7 +190,7 @@ namespace csvnode
 
         if (m_buffer.is_truncated())
         {
-            details::throwCsvNodeEx<Serial>("The CSV-Node Buffer is truncated. Increase size!");
+            details::throwCsvNodeEx(*this, "The CSV-Node Buffer is truncated. Increase size!");
         }
 
         m_serial.write(m_buffer.c_str(), m_buffer.size());
