@@ -1,6 +1,7 @@
 FetchContent_Declare(
     re2
     GIT_REPOSITORY https://github.com/google/re2.git
+    GIT_TAG main
 )
 
 set(RE2_BUILD_TESTING OFF)
