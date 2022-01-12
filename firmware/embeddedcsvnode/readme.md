@@ -5,20 +5,19 @@ The library implements the advananced CSV-Protocol options as specified by the c
 
 
 # Build steps for Arduino IDE
+
 Run `create_arduino_library.py` to create a library useable with the Arduino IDE (Python 3.8 or higher required). The python script creates a compressed directory: `embedded-serial-csv.zip`
 
 Copy `embedded-serial-csv.zip` to the Arduino library directory and extract it. In Windows this is `%HOME%\Documents\Arduino\libraries`. Then open the example sketch and verify/compile.
 
 Alternativly, you can install the library using the Arduino-IDE:
 
-
-
 <p align="center">
     <img width="460" src="./img/arduino-zip-library.png">
 </p>
 
 
-
+Follow the instruction given at the [Embedded Template Library](https://github.com/ETLCPP/etl-arduino) to install the dependency. 
 
 # Usage on Arduino
 

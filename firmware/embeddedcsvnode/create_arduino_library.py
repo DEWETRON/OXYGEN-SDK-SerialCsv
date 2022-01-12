@@ -14,12 +14,6 @@ dest = os.path.join(dirname, library_name)
 print('The destination folder is ', dest)
 
 #
-# Copy the ETL to the Arduino-Library Folder
-src = os.path.join(dirname, 'externals/etl/include')
-shutil.copytree(src, os.path.join(dest, 'src'),  dirs_exist_ok=True)
-print('Done adding ETL...')
-
-#
 # Add files from the src folder
 src = os.path.join(dirname, 'src')
 shutil.copytree(src, os.path.join(dest, 'src'), dirs_exist_ok=True)
