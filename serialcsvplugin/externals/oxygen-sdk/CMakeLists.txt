@@ -14,7 +14,7 @@ if(NOT DEFINED ENV{OXYGEN_SDK_ROOT})
   # message(STATUS "Fetching boost v1.70.0...")
   FetchContent_Populate(
     boost_1_70_0
-    URL https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.zip
+    URL https://boostorg.jfrog.io/artifactory/main/release/1.70.0/source/boost_1_70_0.zip
     SOURCE_DIR ${BOOST_UNPACK_PATH}
   )
 
