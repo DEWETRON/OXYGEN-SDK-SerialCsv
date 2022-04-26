@@ -3,7 +3,7 @@
 #include <re2/re2.h>
 #include "serialcsvplugin/CsvDataLineDecoder.h"
 
-const re2::RE2 serialcsv::CsvDataLineDecoder::m_value_re("(?P<valuematch>(?P<value>-?[0-9]+\\.?[0-9]*)[,;\t]?\\s?)");
+const re2::RE2 serialcsv::CsvDataLineDecoder::m_value_re("(?P<valuematch>(?P<value>[+-]?[0-9]+\\.?[0-9]*)[,;\t]?\\s?)");
 const re2::RE2 serialcsv::CsvDataLineDecoder::m_timestamp_re("(?P<timematch>#t:(?P<time>[0-9]*)[,;\t]?)");
 const re2::RE2 serialcsv::CsvDataLineDecoder::m_invalid_re("[^\\.,;\t\\s\\d-]");
 
