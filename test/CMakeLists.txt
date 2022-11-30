@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.17)
-Include(FetchContent)
 
 project(serialcsvplugin_test)
 set(CMAKE_CXX_STANDARD 17)
@@ -32,7 +31,7 @@ endif()
 
 #
 # Add Dependencies
-add_subdirectory(externals)
+
 target_link_libraries(${PROJECT_NAME} serialcsvplugin)
 target_link_libraries(${PROJECT_NAME} embeddedcsvnode)
 

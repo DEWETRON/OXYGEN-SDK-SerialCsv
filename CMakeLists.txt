@@ -16,9 +16,9 @@ if(BUILD_PLUGIN_WITH_TESTS)
 endif()
 
 add_subdirectory(serialcsvplugin)
-add_subdirectory(firmware)
 
-if(BUILD_PLUGIN_WITH_TESTS)
-    add_subdirectory(test)
-    add_dependencies(serialcsvplugin_test serialcsvplugin embeddedcsvnode)
-endif()
+
+# if(BUILD_PLUGIN_WITH_TESTS)
+#     add_subdirectory(test)
+#     add_dependencies(serialcsvplugin_test serialcsvplugin)
+# endif()

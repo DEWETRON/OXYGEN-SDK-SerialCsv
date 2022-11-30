@@ -32,6 +32,37 @@ Where Channel#1-4 are automatically added to the root channel when data is recei
 
 ___
 
+# Build Instructions
+
+Create a build directory:
+
+```
+C:\OXYGEN-SDK-SerialCsv> mkdir build
+```
+
+Change into it:
+
+```
+C:\OXYGEN-SDK-SerialCsv> cd build
+C:\OXYGEN-SDK-SerialCsv\build>
+```
+
+Execute cmake:
+
+```
+C:\OXYGEN-SDK-SerialCsv\build> cmake ..
+```
+
+Start Visual Studio Project:
+
+```
+C:\OXYGEN-SDK-SerialCsv\build> start serialcsv.sln
+```
+
+
+
+___
+
 # Build status
 
 ![CI Visual Studio](https://github.com/DEWETRON/OXYGEN-SDK-SerialCsv/workflows/CMake/badge.svg)

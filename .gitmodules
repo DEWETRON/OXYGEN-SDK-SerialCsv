@@ -1,3 +1,0 @@
-[submodule "ETL"]
-	path = firmware/embeddedcsvnode/externals/etl
-	url = https://github.com/ETLCPP/etl.git

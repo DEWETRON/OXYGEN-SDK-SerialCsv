@@ -5,10 +5,6 @@
 cmake_minimum_required(VERSION 3.16)
 
 #
-# Include some helpers and the fetchcontent module for external dependencies
-include(FetchContent)
-
-#
 # Define file-generate for relative paths
 if(POLICY CMP0070)
    cmake_policy(SET CMP0070 NEW)
@@ -42,9 +38,17 @@ endif()
 
 #
 # Oxygen SDK
-add_subdirectory(externals/oxygen-sdk)
+if(NOT EXISTS ${OXYGEN_SDK_ROOT})
+    if (EXISTS ${CMAKE_SOURCE_DIR}/../OXYGEN-SDK)
+        set(OXYGEN_SDK_ROOT ${CMAKE_SOURCE_DIR}/../OXYGEN-SDK)
+    else()
+        message(FATAL_ERROR "Could not find OXYGEN-SDK!\nEither install it parallel to the plugins directory or set OXYGEN_SDK_ROOT to a valid path")
+    endif()    
+endif()
+
+
 set(ODK_ROOT ${OXYGEN_SDK_ROOT})
-message("ODKROOT = ${ODK_ROOT}")
+message(STATUS "ODKROOT = ${ODK_ROOT}")
 
 # expand cmake search path to check for project settings
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ODK_ROOT}/cmake )
@@ -115,9 +119,6 @@ target_include_directories(${PROJECT_NAME}
 )
 AddResourceFile(${PROJECT_NAME} "${CMAKE_CURRENT_BINARY_DIR}/qml.rcc" ${RESOURCE_DIR})
 
-#
-# Add Dependencies 
-add_subdirectory(externals)
 
 #
 # General-Plugin Options
