@@ -4,11 +4,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-
-namespace re2
-{
-    class RE2;
-} // namespace re2
+#include <regex>
 
 namespace serialcsv
 {
@@ -53,8 +49,8 @@ namespace serialcsv
         unsigned long m_timestamp;
         bool m_valid;
         bool m_has_timestamp;
-        const static re2::RE2 m_value_re;
-        const static re2::RE2 m_timestamp_re;
-        const static re2::RE2 m_invalid_re;
+        const static std::regex m_value_re;
+        const static std::regex m_timestamp_re;
+        const static std::regex m_invalid_re;
     };
 } // namespace serialcsv

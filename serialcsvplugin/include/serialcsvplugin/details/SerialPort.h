@@ -6,8 +6,8 @@
 #include <functional>
 #include <mutex>
 
-// A C++20 Ready JThread
-#include <jthread.hpp>
+#include <atomic>
+#include <thread>
 #include "serial/serial.h"
 #include "Common.h"
 
@@ -64,7 +64,8 @@ namespace serialcsv
         SerialConfig m_config;
         SerialLineCallback m_callback;
         serial::Timeout m_timeout;
-        std::jthread m_thread;
+        std::thread m_thread;
+        std::atomic<bool> m_stop_token;
         std::mutex m_mutex_port;
         bool m_started;
         bool m_stop;

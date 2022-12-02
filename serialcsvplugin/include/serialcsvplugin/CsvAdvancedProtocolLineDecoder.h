@@ -2,14 +2,10 @@
 #pragma once
 
 #include <string>
+#include <regex>
 #include <vector>
 
 #include "details/Common.h"
-
-namespace re2
-{
-    class RE2;
-} // namespace re2
 
 namespace serialcsv
 {
@@ -41,12 +37,12 @@ namespace serialcsv
         MessageType m_protocol_type;
         ChannelDescriptions m_channel_descriptions;
 
-        const static re2::RE2 m_header_re;
-        const static re2::RE2 m_channels_re;
-        const static re2::RE2 m_channel_name_re;
-        const static re2::RE2 m_channel_range_re;
-        const static re2::RE2 m_channel_min_re;
-        const static re2::RE2 m_channel_max_re;
-        const static re2::RE2 m_channel_unit_re;
+        const static std::regex m_header_re;
+        const static std::regex m_channels_re;
+        const static std::regex m_channel_name_re;
+        const static std::regex m_channel_range_re;
+        const static std::regex m_channel_min_re;
+        const static std::regex m_channel_max_re;
+        const static std::regex m_channel_unit_re;
     };
 } // namespace serialcsv

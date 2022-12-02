@@ -28,7 +28,7 @@ project(serialcsvplugin)
 
 #
 # C++ Standard, Compiler Flags
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 if( MSVC )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -69,8 +69,14 @@ message(STATUS "Qt5Core_RCC_EXECUTABLE = ${Qt5Core_RCC_EXECUTABLE}")
 AddUniqueTargetFromSubdirectory(pugixml "${SW_APP_ROOT}/3rdparty/pugixml-1.9/scripts" "3rdparty/pugixml-1.9")
 AddUniqueTargetFromSubdirectory(odk "${ODK_ROOT}/odk" "odk")
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/3rdparty/serial serial)
+
+include_directories(
+    ${CMAKE_SOURCE_DIR}/3rdparty/serial/include
+)
+
 set(SERIAL_PLUGIN_HEADER_FILES
-    include/serialcsvplugin/details/common.h
+    include/serialcsvplugin/details/Common.h
     include/serialcsvplugin/CsvDataLineDecoder.h
     include/serialcsvplugin/CsvChannel.h
     include/serialcsvplugin/CsvDecoder.h

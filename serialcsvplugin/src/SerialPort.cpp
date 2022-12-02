@@ -9,6 +9,7 @@ SerialPort::SerialPort()
     , m_callback()
     , m_timeout(serial::Timeout::simpleTimeout(250))
     , m_thread()
+    , m_stop_token(false)
     , m_mutex_port()
     , m_started(false)
     , m_stop(false)
@@ -47,9 +48,10 @@ void SerialPort::start(const SerialConfig &config, const SerialLineCallback &cb)
 
     m_config = config;
     m_callback = cb;
+    m_stop_token.store(false);
 
-    m_thread = std::jthread([&](std::stop_token st) {
-        while (!st.stop_requested())
+    m_thread = std::thread([&]() {
+        while (!m_stop_token)
         {
             if (ensureOpenedPort())
             {
@@ -85,7 +87,8 @@ void SerialPort::stop()
         return;
     }
 
-    m_thread.request_stop();
+    //m_thread.request_stop();
+    m_stop_token.store(true);
     m_thread.join();
 
     closePort();
