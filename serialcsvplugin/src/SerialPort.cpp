@@ -210,11 +210,13 @@ bool SerialPort::writeLn(const std::string &m)
     catch (const serial::PortNotOpenedException& e)
     {
         // Log Error?
+        (void)e;
         return false;
     }
     catch (const serial::IOException& e)
     {
         // Log Error?
+        (void)e;
         return false;
     }
     return true;

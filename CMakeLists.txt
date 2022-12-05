@@ -5,8 +5,7 @@ project(serialcsv)
 
 #
 # Default: Disable Plugin/Firmware-Tests
-#option(BUILD_PLUGIN_WITH_TESTS "Build Unit-Tests." OFF)
-option(BUILD_PLUGIN_WITH_TESTS "Build Unit-Tests." ON)
+option(BUILD_PLUGIN_WITH_TESTS "Build Unit-Tests." OFF)
 
 if(BUILD_PLUGIN_WITH_TESTS)
     # Ensure CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS is TRUE when Building with tests
