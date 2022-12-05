@@ -4,42 +4,46 @@
 #include "serialcsvplugin/CsvAdvancedProtocolLineDecoder.h"
 #include "serialcsvplugin/CsvDataLineDecoder.h"
 
-serialcsv::CsvDecoder::CsvDecoder()
+
+namespace serialcsv
+{
+    
+CsvDecoder::CsvDecoder()
 {
 }
 
-bool serialcsv::CsvDecoder::hasTimeSource() const
+bool CsvDecoder::hasTimeSource() const
 {
     return !!m_currentTick;
 }
 
-void serialcsv::CsvDecoder::setTimeSource(std::function<int64_t(void)> currentTick)
+void CsvDecoder::setTimeSource(std::function<int64_t(void)> currentTick)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     m_currentTick = currentTick;
 }
 
-void serialcsv::CsvDecoder::listenOnComPort(const SerialConfig &port_config, const serial::Timeout& timeout)
+void CsvDecoder::listenOnComPort(const SerialConfig &port_config, const serial::Timeout& timeout)
 {
     using namespace std::placeholders;
-    auto cb = std::bind(&serialcsv::CsvDecoder::onLineReceived, this, _1);
+    auto cb = std::bind(&CsvDecoder::onLineReceived, this, _1);
     m_serial.setTimeout(timeout);
     m_serial.start(port_config, cb);
 }
 
-void serialcsv::CsvDecoder::stopListening()
+void CsvDecoder::stopListening()
 {
     m_serial.stop();
 }
 
-void serialcsv::CsvDecoder::clear()
+void CsvDecoder::clear()
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     m_channels.clear();
 }
 
 
-bool serialcsv::CsvDecoder::requestHeader(const int repeat_for)
+bool CsvDecoder::requestHeader(const int repeat_for)
 {
     using namespace std::chrono_literals;
 
@@ -59,7 +63,7 @@ bool serialcsv::CsvDecoder::requestHeader(const int repeat_for)
     return false;
 }
 
-void serialcsv::CsvDecoder::onLineReceived(const std::string &line)
+void CsvDecoder::onLineReceived(const std::string &line)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     int64_t timestamp = 0;
@@ -75,7 +79,7 @@ void serialcsv::CsvDecoder::onLineReceived(const std::string &line)
     }
 
     // First, try to decode as a dataline
-    serialcsv::CsvDataLineDecoder data(line);
+    CsvDataLineDecoder data(line);
     if (data.valid())
     {
         for (size_t i = m_channels.size(); i < data.size(); i++)
@@ -100,12 +104,12 @@ void serialcsv::CsvDecoder::onLineReceived(const std::string &line)
     }
     else
     {
-        serialcsv::CsvAdvancedProtocolLineDecoder proto(line);
+        CsvAdvancedProtocolLineDecoder proto(line);
         if (proto.isAdvancedProtocolLine())
         {
             switch (proto.getMessageType())
             {
-            case serialcsv::MessageType::Header:
+            case MessageType::Header:
             {
                 auto descriptions = proto.getChannelsMetadata();
 
@@ -130,4 +134,6 @@ void serialcsv::CsvDecoder::onLineReceived(const std::string &line)
             }
         }
     }
+}
+
 }

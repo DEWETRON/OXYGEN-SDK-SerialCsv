@@ -207,12 +207,12 @@ bool SerialPort::writeLn(const std::string &m)
     {
         m_serial->write(m + m_config.eol);
     }
-    catch (const serial::PortNotOpenedException e)
+    catch (const serial::PortNotOpenedException& e)
     {
         // Log Error?
         return false;
     }
-    catch (const serial::IOException e)
+    catch (const serial::IOException& e)
     {
         // Log Error?
         return false;

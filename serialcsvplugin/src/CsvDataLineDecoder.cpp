@@ -4,10 +4,11 @@
 
 namespace serialcsv {
 
-const std::regex serialcsv::CsvDataLineDecoder::m_value_re("(?P<valuematch>(?P<value>[+-]?[0-9]+\\.?[0-9]*)[,;\t]?\\s?)");
-const std::regex serialcsv::CsvDataLineDecoder::m_timestamp_re("(?P<timematch>#t:(?P<time>[0-9]*)[,;\t]?)");
-const std::regex serialcsv::CsvDataLineDecoder::m_invalid_re("[^\\.,;\t\\s\\d-]");
-
+#if 0
+const std::regex CsvDataLineDecoder::m_value_re("(?P<valuematch>(?P<value>[+-]?[0-9]+\\.?[0-9]*)[,;\t]?\\s?)");
+const std::regex CsvDataLineDecoder::m_timestamp_re("(?P<timematch>#t:(?P<time>[0-9]*)[,;\t]?)");
+const std::regex CsvDataLineDecoder::m_invalid_re("[^\\.,;\t\\s\\d-]");
+#endif
 
 CsvDataLineDecoder::CsvDataLineDecoder(const std::string &line)
     : m_line(std::move(line)),

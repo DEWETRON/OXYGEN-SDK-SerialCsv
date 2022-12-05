@@ -1,6 +1,5 @@
 #
-# Oxygen Modbus-Plugin
-# Queries a Modbus-Context and samples it for oxygen
+# Oxygen serialcsv-plugin
 #
 cmake_minimum_required(VERSION 3.16)
 
@@ -28,7 +27,7 @@ project(serialcsvplugin)
 
 #
 # C++ Standard, Compiler Flags
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 if( MSVC )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -36,38 +35,14 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 endif()
 
-#
-# Oxygen SDK
-if(NOT EXISTS ${OXYGEN_SDK_ROOT})
-    if (EXISTS ${CMAKE_SOURCE_DIR}/../OXYGEN-SDK)
-        set(OXYGEN_SDK_ROOT ${CMAKE_SOURCE_DIR}/../OXYGEN-SDK)
-    else()
-        message(FATAL_ERROR "Could not find OXYGEN-SDK!\nEither install it parallel to the plugins directory or set OXYGEN_SDK_ROOT to a valid path")
-    endif()    
-endif()
 
-
-set(ODK_ROOT ${OXYGEN_SDK_ROOT})
-message(STATUS "ODKROOT = ${ODK_ROOT}")
-
-# expand cmake search path to check for project settings
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ODK_ROOT}/cmake )
-
-include(CMakeSettings)
-include(OxygenPluginFunctions)
-
-# Set Static Runtime 
-set(MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-SetCommonOutputDirectory()
-SetBoostOptions()
-find_package(Boost REQUIRED)
 find_package(SDKQt REQUIRED)
 
 message(STATUS "Qt5Core_RCC_EXECUTABLE = ${Qt5Core_RCC_EXECUTABLE}")
 
 AddUniqueTargetFromSubdirectory(pugixml "${SW_APP_ROOT}/3rdparty/pugixml-1.9/scripts" "3rdparty/pugixml-1.9")
 AddUniqueTargetFromSubdirectory(odk "${ODK_ROOT}/odk" "odk")
+
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rdparty/serial serial)
 
@@ -100,6 +75,26 @@ set(SERIAL_PLUGIN_QML_FILES
 source_group("QML Files" FILES ${SERIAL_PLUGIN_QML_FILES})
 
 
+# static plugin library
+add_library(${PROJECT_NAME}_static STATIC
+    ${SERIAL_PLUGIN_HEADER_FILES}
+    ${SERIAL_PLUGIN_SOURCE_FILES}
+    ${SERIAL_PLUGIN_QML_FILES}
+)
+
+target_link_libraries(${PROJECT_NAME}_static
+    odk_framework
+    serial
+    ${PROJECT_NAME}
+)
+
+target_include_directories(${PROJECT_NAME}_static
+    PUBLIC include
+    SYSTEM ${Boost_INCLUDE_DIRS}
+)
+
+
+# shared plugin
 add_library(${PROJECT_NAME} SHARED
     ${SERIAL_PLUGIN_HEADER_FILES}
     ${SERIAL_PLUGIN_SOURCE_FILES}
@@ -107,7 +102,8 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 target_link_libraries(${PROJECT_NAME} 
-    PRIVATE odk_framework
+    odk_framework
+    serial
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -115,12 +111,19 @@ target_include_directories(${PROJECT_NAME}
     SYSTEM ${Boost_INCLUDE_DIRS}
 )
 
+
+
+
+
 #
 # Add QML Resources
 qt5_add_binary_resources(${PROJECT_NAME}_qml qml.qrc DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/qml.rcc")
 
 set(RESOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/resources)
 target_include_directories(${PROJECT_NAME}
+        PRIVATE ${RESOURCE_DIR}
+)
+target_include_directories(${PROJECT_NAME}_static
         PRIVATE ${RESOURCE_DIR}
 )
 AddResourceFile(${PROJECT_NAME} "${CMAKE_CURRENT_BINARY_DIR}/qml.rcc" ${RESOURCE_DIR})

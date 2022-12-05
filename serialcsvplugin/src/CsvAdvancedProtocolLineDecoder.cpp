@@ -4,6 +4,7 @@
 
 namespace serialcsv {
 
+#if 0
 const std::regex CsvAdvancedProtocolLineDecoder::m_header_re("(#h:)");
 const std::regex CsvAdvancedProtocolLineDecoder::m_channels_re("(([a-zA-Z0-9 \\-#:\\.°\\[\\]_/]+)[,;\t]?)");
 const std::regex CsvAdvancedProtocolLineDecoder::m_channel_name_re("([a-zA-Z0-9_ -]+)");
@@ -11,12 +12,12 @@ const std::regex CsvAdvancedProtocolLineDecoder::m_channel_range_re("(#r:\\s*(-?
 const std::regex CsvAdvancedProtocolLineDecoder::m_channel_min_re("(#min:\\s*(-?[0-9]+\\.?[0-9]*))");
 const std::regex CsvAdvancedProtocolLineDecoder::m_channel_max_re("(#max:\\s*(-?[0-9]+\\.?[0-9]*))");
 const std::regex CsvAdvancedProtocolLineDecoder::m_channel_unit_re("(#u:\\s*([^,;\t:#]+))");
-
+#endif
 
 CsvAdvancedProtocolLineDecoder::CsvAdvancedProtocolLineDecoder(const std::string &line) 
-    : m_line(std::move(line))
-    , m_is_protocol_line(false)
+    : m_is_protocol_line(false)
     , m_is_valid(true)
+    , m_line(std::move(line))
 {
     if (checkForHeaderData())
     {
@@ -91,6 +92,8 @@ bool CsvAdvancedProtocolLineDecoder::checkForHeaderData()
     // {
     //     return false;
     // }
+
+    return false;
 }
 
 }
