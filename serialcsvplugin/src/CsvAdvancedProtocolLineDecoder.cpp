@@ -1,10 +1,10 @@
 // Copyright Heinz-Peter Liechtenecker 2020
 
 #include "serialcsvplugin/CsvAdvancedProtocolLineDecoder.h"
+#include "serialcsvplugin/regex_util.h"
 
 namespace serialcsv {
 
-#if 0
 const std::regex CsvAdvancedProtocolLineDecoder::m_header_re("(#h:)");
 const std::regex CsvAdvancedProtocolLineDecoder::m_channels_re("(([a-zA-Z0-9 \\-#:\\.°\\[\\]_/]+)[,;\t]?)");
 const std::regex CsvAdvancedProtocolLineDecoder::m_channel_name_re("([a-zA-Z0-9_ -]+)");
@@ -12,7 +12,6 @@ const std::regex CsvAdvancedProtocolLineDecoder::m_channel_range_re("(#r:\\s*(-?
 const std::regex CsvAdvancedProtocolLineDecoder::m_channel_min_re("(#min:\\s*(-?[0-9]+\\.?[0-9]*))");
 const std::regex CsvAdvancedProtocolLineDecoder::m_channel_max_re("(#max:\\s*(-?[0-9]+\\.?[0-9]*))");
 const std::regex CsvAdvancedProtocolLineDecoder::m_channel_unit_re("(#u:\\s*([^,;\t:#]+))");
-#endif
 
 CsvAdvancedProtocolLineDecoder::CsvAdvancedProtocolLineDecoder(const std::string &line) 
     : m_is_protocol_line(false)
@@ -30,70 +29,65 @@ CsvAdvancedProtocolLineDecoder::CsvAdvancedProtocolLineDecoder(const std::string
 
 bool CsvAdvancedProtocolLineDecoder::checkForHeaderData()
 {
+    std::string input(m_line);
 
-    // using namespace re2;
-    // StringPiece input(m_line);
+    if (re::searchAndConsume(&input, m_header_re))
+    {
+        // Got a Header-Protocol
+        m_is_protocol_line = true;
+        m_protocol_type = serialcsv::MessageType::Header;
 
-    // if (RE2::FindAndConsume(&input, m_header_re))
-    // {
-    //     // Got a Header-Protocol
-    //     m_is_protocol_line = true;
-    //     m_protocol_type = serialcsv::MessageType::Header;
+        // Now Interpret Channel-Header-Data
+        std::string debug;
 
-    //     // Now Interpret Channel-Header-Data
-    //     std::string debug;
+        while (re::searchAndConsume(&input, m_channels_re, &debug))
+        {
+            std::string channel(debug);
+            ChannelDescription ch;
 
-    //     while (RE2::FindAndConsume(&input, m_channels_re, nullptr, &debug))
-    //     {
-    //         StringPiece channel(debug);
-    //         ChannelDescription ch;
+            // Get the mandatory Channel-Name
+            if (!re::partialMatch(channel, m_channel_name_re, &ch.name))
+            {
+                // There was for sure an error in the protocol, return false
+                m_is_valid = false;
+                return true;
+            }
 
-    //         // Get the mandatory Channel-Name
-    //         if (!RE2::PartialMatch(channel, m_channel_name_re, &ch.name))
-    //         {
-    //             // There was for sure an error in the protocol, return false
-    //             m_is_valid = false;
-    //             return true;
-    //         }
+            // Test for optional Meta-Data
+            if (re::partialMatch(channel, m_channel_range_re, &ch.min, &ch.max))
+            {
+                ch.hasMin = true;
+                ch.hasMax = true;
+            }
 
-    //         // Test for optional Meta-Data
-    //         if (RE2::PartialMatch(channel, m_channel_range_re, nullptr, &ch.min, &ch.max))
-    //         {
-    //             ch.hasMin = true;
-    //             ch.hasMax = true;
-    //         }
+            if (re::partialMatch(channel, m_channel_min_re, &ch.min))
+            {
+                ch.hasMin = true;
+            }
 
-    //         if (RE2::PartialMatch(channel, m_channel_min_re, nullptr, &ch.min))
-    //         {
-    //             ch.hasMin = true;
-    //         }
+            if (re::partialMatch(channel, m_channel_max_re, &ch.max))
+            {
+                ch.hasMax = true;
+            }
 
-    //         if (RE2::PartialMatch(channel, m_channel_max_re, nullptr, &ch.max))
-    //         {
-    //             ch.hasMax = true;
-    //         }
+            if (re::partialMatch(channel, m_channel_unit_re, &ch.unit))
+            {
+                ch.hasUnit = true;
+            }
 
-    //         if (RE2::PartialMatch(channel, m_channel_unit_re, nullptr, &ch.unit))
-    //         {
-    //             ch.hasUnit = true;
-    //         }
+            m_channel_descriptions.push_back(std::move(ch));
 
-    //         m_channel_descriptions.push_back(std::move(ch));
+            if (channel.empty())
+            {
+                break;
+            }
+        }
 
-    //         if (channel.empty())
-    //         {
-    //             break;
-    //         }
-    //     }
-
-    //     return true;
-    // }
-    // else
-    // {
-    //     return false;
-    // }
+        return true;
+    }
 
     return false;
+
 }
 
 }

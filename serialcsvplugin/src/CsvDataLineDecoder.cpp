@@ -1,14 +1,14 @@
 // Copyright Heinz-Peter Liechtenecker 2020
 
 #include "serialcsvplugin/CsvDataLineDecoder.h"
+#include "serialcsvplugin/regex_util.h"
+#include <iostream>
 
 namespace serialcsv {
 
-#if 0
-const std::regex CsvDataLineDecoder::m_value_re("(?P<valuematch>(?P<value>[+-]?[0-9]+\\.?[0-9]*)[,;\t]?\\s?)");
-const std::regex CsvDataLineDecoder::m_timestamp_re("(?P<timematch>#t:(?P<time>[0-9]*)[,;\t]?)");
+const std::regex CsvDataLineDecoder::m_value_re(R"(([+-]?[0-9]+\.?[0-9]*)[,;\t]?\s?)");
+const std::regex CsvDataLineDecoder::m_timestamp_re("(#t:([0-9]*)[,;\t]?)");
 const std::regex CsvDataLineDecoder::m_invalid_re("[^\\.,;\t\\s\\d-]");
-#endif
 
 CsvDataLineDecoder::CsvDataLineDecoder(const std::string &line)
     : m_line(std::move(line)),
@@ -17,25 +17,27 @@ CsvDataLineDecoder::CsvDataLineDecoder(const std::string &line)
       m_valid(true),
       m_has_timestamp(false)
 {
-    // using namespace re2;
-    // StringPiece input(m_line);
+    auto input = line;
 
-    // // Consume Timestamp
-    // m_has_timestamp = RE2::FindAndConsume(&input, m_timestamp_re, nullptr, &m_timestamp);
+    // Consume Timestamp
+    m_has_timestamp = re::searchAndConsume(&input, m_timestamp_re, &m_timestamp);
 
-    // // Check if the string is valid
-    // if (RE2::FindAndConsume(&input, m_invalid_re))
-    // {
-    //     m_valid = false;
-    //     return;
-    // }
+    // Check if the string is valid
+    {
+        if (std::regex_search(input, m_invalid_re))
+        {
+            m_valid = false;
+            return;
+        }
+    }
 
-    // // Consume Values
-    // double value = 0.0;
-    // while (RE2::FindAndConsume(&input, m_value_re, nullptr, &value))
-    // {
-    //     m_data.emplace_back(value);
-    // }
+    // Consume Values
+    double value = 0.0;
+
+    while (re::searchAndConsume(&input, m_value_re, &value))
+    {
+        m_data.emplace_back(value);
+    }
 }
 
 bool CsvDataLineDecoder::at(const std::size_t i, double &v) const

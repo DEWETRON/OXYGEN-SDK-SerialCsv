@@ -21,11 +21,12 @@ find_package(Boost     REQUIRED COMPONENTS
 add_executable(
         ${PROJECT_NAME}
         main.cpp
+        TestCsvRx.cpp
         TestCsvDataLineDecoder.cpp
+        TestCsvAdvancedProtocolLineDecoder.cpp
         # TestFirmware.cpp
         # TestFirmwareErrors.cpp
         # TestFirmwareExample.cpp
-        TestCsvAdvancedProtocolLineDecoder.cpp
 )
 
 if (BUILD_SERIAL_PORT_INTEGRATION_TEST)
@@ -42,6 +43,9 @@ endif()
 target_link_libraries(${PROJECT_NAME} 
     serialcsvplugin_static
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+
+
+add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 
 #
 # Register Tests for CTest
